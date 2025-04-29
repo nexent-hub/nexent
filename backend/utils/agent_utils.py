@@ -5,15 +5,16 @@ import yaml
 from threading import Lock, Thread
 from typing import List, Dict
 
-from dotenv import load_dotenv, set_key
 from nexent.core import MessageObserver
 from nexent.core.agents import CoreAgent
 from nexent.core.models import OpenAIModel
-from nexent.core.tools import GetEmailTool, SendEmailTool, EXASearchTool, KnowledgeBaseSearchTool, SummaryTool
+from nexent.core.tools import EXASearchTool, KnowledgeBaseSearchTool, SummaryTool
 from smolagents import TaskStep, ActionStep
 
 from consts.const import IMAP_SERVER, IMAP_PORT, MAIL_USERNAME, MAIL_PASSWORD, SMTP_SERVER, SMTP_PORT, \
     EXA_SEARCH_API_KEY
+
+from backend.utils.config_utils import ConfigManager
 
 
 class ThreadManager:
@@ -52,61 +53,6 @@ class ThreadManager:
 
 # Create global thread manager instance
 thread_manager = ThreadManager()
-
-
-class ConfigManager:
-    """Configuration manager for dynamic loading and caching configurations"""
-
-    def __init__(self, env_file=".env"):
-        self.env_file = env_file
-        self.last_modified_time = 0
-        self.config_cache = {}
-        self.load_config()
-
-    def load_config(self):
-        """Load configuration file and update cache"""
-        # Check if file exists
-        if not os.path.exists(self.env_file):
-            print(f"Warning: Configuration file {self.env_file} does not exist")
-            return
-
-        # Get file last modification time
-        current_mtime = os.path.getmtime(self.env_file)
-
-        # If file hasn't been modified, return directly
-        if current_mtime == self.last_modified_time:
-            return
-
-        # Update last modification time
-        self.last_modified_time = current_mtime
-
-        # Reload configuration
-        load_dotenv(self.env_file, override=True)
-
-        # Update cache
-        self.config_cache = {key: value for key, value in os.environ.items()}
-        self.config_cache.update({
-            "IMAGE_FILTER": os.getenv("IMAGE_FILTER", False),
-        })
-
-        print(f"Configuration reloaded at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-
-    def get_config(self, key, default=""):
-        """Get configuration value, reload if configuration has been updated"""
-        self.load_config()
-        return self.config_cache.get(key, default)
-
-    def set_config(self, key, value):
-        """Set configuration value"""
-        self.config_cache[key] = value
-        set_key(self.env_file, key, value)
-
-    def force_reload(self):
-        """Force reload configuration"""
-        self.last_modified_time = 0
-        self.load_config()
-        return {"status": "success", "message": "Configuration reloaded"}
-
 
 # Create global configuration manager instance
 config_manager = ConfigManager(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"))
