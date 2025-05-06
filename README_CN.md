@@ -38,7 +38,7 @@ Nexent 是一个开源智能体SDK和平台，能够将描述流程的自然语�
 
 ```bash
 git clone git@github.com:nexent-hub/nexent.git
-sh docker/deploy.sh
+bash docker/deploy.sh
 ```
 
 当容器运行后，在浏览器中打开 **http://localhost:3000** 并按照设置向导操作。

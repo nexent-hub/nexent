@@ -38,7 +38,7 @@ Most of all, we need visibility. Star ⭐ and watch the repo, share it with frie
 
 ```bash
 git clone git@github.com:nexent-hub/nexent.git
-sh docker/deploy.sh
+bash docker/deploy.sh
 ```
 
 When the containers are running, open **http://localhost:3000** in your browser and follow the setup wizard.

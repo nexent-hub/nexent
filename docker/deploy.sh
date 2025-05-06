@@ -56,10 +56,10 @@ add_permission() {
   # sql 初始化脚本权限
   chmod 644 "$root_path/init.sql"
 
-  create_dir_with_permission "$ROOT_DIR/elasticsearch" 755
-  create_dir_with_permission "$ROOT_DIR/postgresql" 755
-  create_dir_with_permission "$ROOT_DIR/minio" 755
-  create_dir_with_permission "$ROOT_DIR/uploads" 755
+  create_dir_with_permission "$ROOT_DIR/elasticsearch" 775
+  create_dir_with_permission "$ROOT_DIR/postgresql" 775
+  create_dir_with_permission "$ROOT_DIR/minio" 775
+  create_dir_with_permission "$ROOT_DIR/uploads" 777
 }
 
 install() {
