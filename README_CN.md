@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/English-README-blue)](README.md)
 [![中文](https://img.shields.io/badge/中文-README-green)](README_CN.md)
 
-Nexent 是一个开源智能体SDK和平台，能够将单一提示词转化为完整的多模态服务 —— 无需编排，无需复杂拖拉拽。基于 MCP 工具生态系统构建，Nexent 提供灵活的模型集成、可扩展的数据处理和强大的知识库管理。我们的目标很简单：将数据、模型和工具整合到一个智能中心中，让任何人都能轻松地将 Nexent 集成到项目中，使日常工作流程更智能、更互联。
+Nexent 是一个开源智能体SDK和平台，能够将描述流程的自然语言转化为完整的多模态服务 —— 无需编排，无需复杂拖拉拽。基于 MCP 工具生态系统构建，Nexent 提供灵活的模型集成、可扩展的数据处理和强大的知识库管理。我们的目标很简单：将数据、模型和工具整合到一个智能中心中，让任何人都能轻松地将 Nexent 集成到项目中，使日常工作流程更智能、更互联。
 
 > 一个提示词，无限种可能。
 
@@ -14,7 +14,7 @@ Nexent 是一个开源智能体SDK和平台，能够将单一提示词转化为�
 我们仍处于首个开源阶段，目标是在 **2025 年 6 月发布 Nexent v1 稳定版**。在此之前，我们将持续快速发布核心功能 —— 我们期待您的参与：
 
 * **📋 关注 [路线图(Comming)](#)** 了解我们的下一步计划。  
-* **🔍 试用当前版本** 并在 [问题反馈](https://github.com/nexent-hub/nexent-community/issues) 中留下想法或报告错误。
+* **🔍 试用当前版本** 并在 [问题反馈](https://github.com/nexent-hub/nexent/issues) 中留下想法或报告错误。
 
 > *Rome wasn't built in a day.*
 
@@ -37,7 +37,7 @@ Nexent 是一个开源智能体SDK和平台，能够将单一提示词转化为�
 ### 2. 🛠️ 使用 Docker Compose 快速开始
 
 ```bash
-git clone git@github.com:nexent-hub/nexent-community.git
+git clone git@github.com:nexent-hub/nexent.git
 sh docker/deploy.sh
 ```
 
@@ -47,7 +47,7 @@ sh docker/deploy.sh
 
 - 浏览 [常见问题](FAQ_CN.md) 了解常见安装问题。  
 - 在我们的 [Discord 社区](https://discord.gg/tb5H3S3wyv) 中提问。  
-- 在 [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) 中提交错误报告或功能建议。
+- 在 [GitHub Issues](https://github.com/nexent-hub/nexent/issues) 中提交错误报告或功能建议。
 
 > ℹ️ 由于开发紧张，目前我们仅支持 Jina Embedding 模型。其他模型的支持将在未来版本中添加。有关 Jina API 密钥获取，请参阅我们的[常见问题](FAQ_CN.md)。
 
@@ -104,12 +104,15 @@ sh docker/deploy.sh
 2. 🤖 **模型供应商支持有限**  
    我们目前对不同的模型供应商支持有限，包括语音和多模态模型。我们将在未来几周内快速更新这些支持，请保持关注！
 
+3. 🎨 **缺少Agent制作与配置界面**  
+   我们注意到目前还没有提供智能体制作、工具选择与配置的可视化界面。我们计划在未来几周内实现这一功能，使智能体创建过程更加直观和用户友好。
+
 # 👥 贡献指南
 
 我们欢迎各种形式的贡献！无论是修复错误、添加功能还是改进文档，您的帮助都能让 Nexent 变得更好。
 
 - 📖 阅读我们的[贡献指南](CONTRIBUTING_CN.md)开始贡献
-- 🐛 在 [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) 中报告错误或提出功能建议
+- 🐛 在 [GitHub Issues](https://github.com/nexent-hub/nexent/issues) 中报告错误或提出功能建议
 - 💬 加入我们的 [Discord 社区](https://discord.gg/tb5H3S3wyv) 讨论想法
 
 # 💬 社区与联系方式

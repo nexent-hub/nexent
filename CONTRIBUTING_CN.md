@@ -5,7 +5,7 @@
 
 感谢您考虑为 Nexent 贡献力量！无论是代码、文档还是经验分享，您的每一份付出都能让 Nexent 变得更好。如果您愿意向他人推荐 Nexent 或在仓库点个 ⭐️，我们也非常感激。万分感谢！💛 让我们一起打造非凡之作！🎉
 
-关于许可证，请花一分钟阅读我们简短的[许可和贡献者协议](https://github.com/nexent-hub/nexent-community/blob/main/LICENSE)。同时也请遵循[社区行为准则](https://github.com/nexent-hub/nexent-community/blob/main/CODE_OF_CONDUCT.md)。
+关于许可证，请花一分钟阅读我们简短的[许可和贡献者协议](https://github.com/nexent-hub/nexent/blob/main/LICENSE)。同时也请遵循[社区行为准则](https://github.com/nexent-hub/nexent/blob/main/CODE_OF_CONDUCT.md)。
 
 ---
 
@@ -47,19 +47,19 @@
 - 截图或设计稿（如果有）。
 
 **提交到哪里？**  
-在我们的 [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) 中新建一个 Issue，并选择合适的模板（Bug 报告或功能请求）。
+在我们的 [GitHub Issues](https://github.com/nexent-hub/nexent/issues) 中新建一个 Issue，并选择合适的模板（Bug 报告或功能请求）。
 
 ---
 
 ## 💻 提交代码更改
 
 ### 第一步：Fork 仓库
-🍴 Fork [Nexent 仓库](https://github.com/nexent-hub/nexent-community) 到您的 GitHub 账户。
+🍴 Fork [Nexent 仓库](https://github.com/nexent-hub/nexent) 到您的 GitHub 账户。
 
 ### 第二步：克隆您的 Fork
 📦 将您的 Fork 克隆到本地：
 ```bash
-git clone https://github.com/nexent-hub/nexent-community.git
+git clone https://github.com/nexent-hub/nexent.git
 ```
 
 ### 第三步：创建分支
@@ -94,7 +94,7 @@ git commit -m "📝 update API documentation"
 ### 第六步：与上游同步
 ⚙️ 让您的 Fork 与主仓库的最新更改保持同步：
 ```bash
-git remote add upstream https://github.com/nexent-hub/nexent-community.git
+git remote add upstream https://github.com/nexent-hub/nexent.git
 git fetch upstream
 git merge upstream/main
 ```

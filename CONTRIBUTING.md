@@ -5,7 +5,7 @@
 
 Thank you for considering contributing to Nexent! From code to docs to sharing your experience, every bit helps make Nexent better for everyone. It also helps us if you share Nexent with others, or simply ⭐️ the repo. Thanks a million! 💛 Let's build something amazing together! 🎉
 
-In terms of licensing, please take a minute to read our short [License and Contributor Agreement](https://github.com/nexent-hub/nexent-community/blob/main/LICENSE). The community also adheres to the [code of conduct](https://github.com/nexent-hub/nexent-community/blob/main/CODE_OF_CONDUCT.md).
+In terms of licensing, please take a minute to read our short [License and Contributor Agreement](https://github.com/nexent-hub/nexent/blob/main/LICENSE). The community also adheres to the [code of conduct](https://github.com/nexent-hub/nexent/blob/main/CODE_OF_CONDUCT.md).
 ---
 
 ## 🤔 How You Can Contribute
@@ -46,19 +46,19 @@ For feature ideas, please provide:
 - Screenshots or mockups (if applicable).
 
 **Where to submit?**  
-Open a new issue in our [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) section and select the appropriate template (Bug Report or Feature Request).
+Open a new issue in our [GitHub Issues](https://github.com/nexent-hub/nexent/issues) section and select the appropriate template (Bug Report or Feature Request).
 
 ---
 
 ## 💻 Submitting Code Changes
 
 ### Step 1: Fork the Repository
-🍴 Fork the [Nexent repository](https://github.com/nexent-hub/nexent-community) to your GitHub account.
+🍴 Fork the [Nexent repository](https://github.com/nexent-hub/nexent) to your GitHub account.
 
 ### Step 2: Clone Your Fork
 📦 Clone your forked repository locally:
 ```bash
-git clone https://github.com/nexent-hub/nexent-community.git
+git clone https://github.com/nexent-hub/nexent.git
 ```
 
 ### Step 3: Create a Branch
@@ -93,7 +93,7 @@ git commit -m "📝 update API documentation"
 ### Step 6: Sync with Upstream
 ⚙️ Keep your fork updated with the latest changes from the main repository:
 ```bash
-git remote add upstream https://github.com/nexent-hub/nexent-community.git
+git remote add upstream https://github.com/nexent-hub/nexent.git
 git fetch upstream
 git merge upstream/main
 ```

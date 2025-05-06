@@ -44,5 +44,5 @@ This FAQ addresses common questions and issues you might encounter while install
 
 If your question isn't answered here:
 - Join our [Discord community](https://discord.gg/tb5H3S3wyv) for real-time support
-- Check our [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) for similar problems
+- Check our [GitHub Issues](https://github.com/nexent-hub/nexent/issues) for similar problems
 - Refer to our [Contribution Guide](../CONTRIBUTING.md) for more detailed information

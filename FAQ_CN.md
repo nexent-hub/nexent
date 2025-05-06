@@ -44,5 +44,5 @@
 
 如果这里没有找到您的问题答案：
 - 加入我们的 [Discord 社区](https://discord.gg/tb5H3S3wyv) 获取实时支持
-- 查看我们的 [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues) 寻找类似问题
+- 查看我们的 [GitHub Issues](https://github.com/nexent-hub/nexent/issues) 寻找类似问题
 - 参考我们的[贡献指南](../CONTRIBUTING_CN.md)获取更详细的信息 

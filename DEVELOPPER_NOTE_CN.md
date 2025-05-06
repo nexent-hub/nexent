@@ -105,4 +105,4 @@ agent = CoreAgent(
 
 - 查看 [常见问题](FAQ_CN.md)
 - 加入 [Discord 社区](https://discord.gg/tb5H3S3wyv)
-- 提交 [GitHub Issues](https://github.com/nexent-hub/nexent-community/issues)
+- 提交 [GitHub Issues](https://github.com/nexent-hub/nexent/issues)
