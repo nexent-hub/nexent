@@ -36,7 +36,7 @@ services:
       # 时区设置
       TZ: "Asia/Shanghai"
     volumes:
-      - /opt/nexent/elasticsearch:/usr/share/elasticsearch/data
+      - $ROOT_DIR/elasticsearch:/usr/share/elasticsearch/data
     ports:
       - "9210:9200"  # HTTP API
       - "9310:9300"  # 集群通信端口
@@ -63,7 +63,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       TZ: "Asia/Shanghai"
     volumes:
-      - /opt/nexent/postgresql/data:/var/lib/postgresql/data
+      - ${ROOT_DIR}/postgresql/data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5434:5432"
@@ -86,7 +86,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - /opt/nexent/uploads:/opt/backend/uploads:rw
+      - $ROOT_DIR/uploads:/opt/backend/uploads:rw
     environment:
       <<: [*minio-vars, *es-vars]
       skip_proxy: "true"
@@ -115,7 +115,7 @@ services:
     ports:
       - "5012:5012"
     volumes:
-      - /opt/nexent/uploads:/opt/backend/uploads:rw
+      - $ROOT_DIR/uploads:/opt/backend/uploads:rw
     environment:
       skip_proxy: "true"
     env_file:
@@ -148,7 +148,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       TZ: "Asia/Shanghai"
     volumes:
-      - /opt/nexent/minio/data:/data
+      - $ROOT_DIR/minio/data:/data
       - ./init_minio.sh:/init_minio.sh
     networks:
       - nexent
