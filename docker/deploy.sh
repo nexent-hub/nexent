@@ -57,14 +57,14 @@ add_permission() {
   chmod 644 "$root_path/init.sql"
 
   create_dir_with_permission "$ROOT_DIR/elasticsearch" 755
-  create_dir_with_permission "$ROOT_DIR/postgresql/data" 755
-  create_dir_with_permission "$ROOT_DIR/minio/data" 755
-  create_dir_with_permission "$ROOT_DIR/uploads" 777
+  create_dir_with_permission "$ROOT_DIR/postgresql" 755
+  create_dir_with_permission "$ROOT_DIR/minio" 755
+  create_dir_with_permission "$ROOT_DIR/uploads" 755
 }
 
 install() {
   cd "$root_path"
-  docker-compose -f "$root_path/docker-compose.yml" up -d
+  docker-compose -p nexent -f "$root_path/docker-compose.yml" up -d
 }
 
 add_permission

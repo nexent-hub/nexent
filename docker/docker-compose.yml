@@ -1,5 +1,3 @@
-version: '3.8'
-
 x-es-vars: &es-vars
   ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
 x-minio-vars: &minio-vars
@@ -149,7 +147,6 @@ services:
       TZ: "Asia/Shanghai"
     volumes:
       - $ROOT_DIR/minio/data:/data
-      - ./init_minio.sh:/init_minio.sh
     networks:
       - nexent
     restart: always
