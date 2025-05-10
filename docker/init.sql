@@ -197,7 +197,7 @@ INSERT INTO "nexent"."model_record_t" ("model_repo", "model_name", "model_factor
 -- Create the ag_tool_info_t table
 CREATE TABLE IF NOT EXISTS nexent.ag_tool_info_t (
     tool_id SERIAL PRIMARY KEY NOT NULL,
-    name VARCHAR(100) UNIQUE,
+    name VARCHAR(100),
     display_name VARCHAR(100),
     description VARCHAR(2048),
     source VARCHAR(100),
@@ -245,7 +245,7 @@ COMMENT ON COLUMN nexent.ag_tool_info_t.delete_flag IS 'Whether it is deleted. O
 
 -- Create the ag_tenant_agent_t table in the nexent schema
 CREATE TABLE IF NOT EXISTS nexent.ag_tenant_agent_t (
-    tenant_agent_id SERIAL PRIMARY KEY NOT NULL,
+    agent_id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(100),
     description VARCHAR(2048),
     model_name VARCHAR(100),
@@ -280,7 +280,7 @@ EXECUTE FUNCTION update_ag_tenant_agent_update_time();
 COMMENT ON TABLE nexent.ag_tenant_agent_t IS 'Information table for agents';
 
 -- Add comments to the columns
-COMMENT ON COLUMN nexent.ag_tenant_agent_t.tenant_agent_id IS 'ID';
+COMMENT ON COLUMN nexent.ag_tenant_agent_t.agent_id IS 'ID';
 COMMENT ON COLUMN nexent.ag_tenant_agent_t.name IS 'Agent name';
 COMMENT ON COLUMN nexent.ag_tenant_agent_t.description IS 'Description';
 COMMENT ON COLUMN nexent.ag_tenant_agent_t.model_name IS 'Name of the model used';
@@ -296,14 +296,19 @@ COMMENT ON COLUMN nexent.ag_tenant_agent_t.created_by IS 'Creator';
 COMMENT ON COLUMN nexent.ag_tenant_agent_t.updated_by IS 'Updater';
 COMMENT ON COLUMN nexent.ag_tenant_agent_t.delete_flag IS 'Whether it is deleted. Optional values: Y/N';
 
--- Create the ag_user_agent_t table in the nexent schema
+-- Create the ag_user_agent_t table in the nexent schema with new fields
 CREATE TABLE IF NOT EXISTS nexent.ag_user_agent_t (
     user_agent_id SERIAL PRIMARY KEY NOT NULL,
+    agent_id INTEGER ,
+    prompt_core TEXT,
+    prompt_tool TEXT,
+    prompt_demo TEXT,
+    tenant_id VARCHAR(100),
     user_id VARCHAR(100),
-    agent_name VARCHAR(100),
-    description VARCHAR(2048),
     create_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
     delete_flag VARCHAR(1) DEFAULT 'N'
 );
 
@@ -312,9 +317,12 @@ COMMENT ON TABLE nexent.ag_user_agent_t IS 'Information table for user agents';
 
 -- Add comments to the columns
 COMMENT ON COLUMN nexent.ag_user_agent_t.user_agent_id IS 'ID';
+COMMENT ON COLUMN nexent.ag_user_agent_t.agent_id IS 'Agent ID';
+COMMENT ON COLUMN nexent.ag_user_agent_t.prompt_core IS 'Core responsibility prompt';
+COMMENT ON COLUMN nexent.ag_user_agent_t.prompt_tool IS 'Tool order prompt';
+COMMENT ON COLUMN nexent.ag_user_agent_t.prompt_demo IS 'Example prompt';
+COMMENT ON COLUMN nexent.ag_user_agent_t.tenant_id IS 'Belonging tenant';
 COMMENT ON COLUMN nexent.ag_user_agent_t.user_id IS 'User ID';
-COMMENT ON COLUMN nexent.ag_user_agent_t.agent_name IS 'Agent name';
-COMMENT ON COLUMN nexent.ag_user_agent_t.description IS 'Agent description';
 COMMENT ON COLUMN nexent.ag_user_agent_t.create_time IS 'Creation time';
 COMMENT ON COLUMN nexent.ag_user_agent_t.update_time IS 'Update time';
 COMMENT ON COLUMN nexent.ag_user_agent_t.delete_flag IS 'Whether it is deleted. Optional values: Y/N';
@@ -349,7 +357,10 @@ CREATE TABLE IF NOT EXISTS nexent.ag_tool_instance_t (
     user_id VARCHAR(100),
     tenant_id VARCHAR(100),
     create_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    update_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+    delete_flag VARCHAR(1) DEFAULT 'N'
 );
 
 -- Add comment to the table

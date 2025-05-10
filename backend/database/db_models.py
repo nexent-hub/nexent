@@ -5,6 +5,11 @@ from sqlalchemy.sql import func
 SCHEMA = "nexent"
 
 class Base(DeclarativeBase):
+    create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
+    update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), onupdate=func.now(), doc="Update time")
+    created_by = Column(String(100), doc="Creator")
+    updated_by = Column(String(100), doc="Updater")
+    delete_flag = Column(String(1), default="N", doc="Whether it is deleted. Optional values: Y/N")
     pass
 
 class ConversationRecord(Base):
@@ -141,18 +146,13 @@ class ToolInfo(Base):
     __table_args__ = {"schema": SCHEMA}
 
     tool_id = Column(Integer, primary_key=True, nullable=False, doc="ID")
-    name = Column(String(100), unique=True, doc="Unique key name")
+    name = Column(String(100), doc="Unique key name")
     display_name = Column(String(100), doc="Tool display name")
     description = Column(String(2048), doc="Prompt tool description")
     source = Column(String(100), doc="Source")
     author = Column(String(100), doc="Tool author")
     usage = Column(String(100), doc="Usage")
     params = Column(JSON, doc="Tool parameter information (json)")
-    create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
-    update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), onupdate=func.now(), doc="Update time")
-    created_by = Column(String(100), doc="Creator")
-    updated_by = Column(String(100), doc="Updater")
-    delete_flag = Column(String(1), default="N", doc="Whether it is deleted. Optional values: Y/N")
 
 class AgentInfo(Base):
     """
@@ -161,7 +161,7 @@ class AgentInfo(Base):
     __tablename__ = "ag_tenant_agent_t"
     __table_args__ = {"schema": SCHEMA}
 
-    tenant_agent_id = Column(Integer, primary_key=True, nullable=False, doc="ID")
+    agent_id = Column(Integer, primary_key=True, nullable=False, doc="ID")
     name = Column(String(100), doc="Agent name")
     description = Column(String(2048), doc="Description")
     model_name = Column(String(100), doc="Name of the model used")
@@ -171,11 +171,6 @@ class AgentInfo(Base):
     prompt_demo = Column(String, doc="Example prompt")
     parent_agent_id = Column(Integer, doc="Parent Agent ID")
     tenant_id = Column(String(100), doc="Belonging tenant")
-    create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
-    update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), onupdate=func.now(), doc="Update time")
-    created_by = Column(String(100), doc="Creator")
-    updated_by = Column(String(100), doc="Updater")
-    delete_flag = Column(String(1), default="N", doc="Whether it is deleted. Optional values: Y/N")
 
 class UserAgent(Base):
     """
@@ -191,9 +186,6 @@ class UserAgent(Base):
     prompt_demo = Column(String, doc="Example prompt")
     tenant_id = Column(String(100), doc="Belonging tenant")
     user_id = Column(String(100), doc="Belonging user")
-    create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
-    update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), onupdate=func.now(), doc="Update time")
-    delete_flag = Column(String(1), default="N", doc="Whether it is deleted. Optional values: Y/N")
 
 class ToolInstance(Base):
     """
@@ -208,5 +200,3 @@ class ToolInstance(Base):
     params = Column(JSON, doc="Parameter configuration")
     user_id = Column(String(100), doc="User ID")
     tenant_id = Column(String(100), doc="Tenant ID")
-    create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
-    update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), onupdate=func.now(), doc="Update time")
