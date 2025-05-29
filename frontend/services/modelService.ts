@@ -15,7 +15,7 @@ export class ModelError extends Error {
   constructor(message: string, public code?: number) {
     super(message)
     this.name = 'ModelError'
-    // 重写 stack 属性，使其只返回消息
+    // Override the stack property to only return the message
     Object.defineProperty(this, 'stack', {
       get: function() {
         return this.message
@@ -23,22 +23,22 @@ export class ModelError extends Error {
     })
   }
 
-  // 重写 toString 方法，使其只返回消息
+  // Override the toString method to only return the message
   toString() {
     return this.message
   }
 }
 
-// 获取授权头的辅助函数
+// Helper function to get authorization headers
 const getHeaders = () => {
   return {
     'Content-Type': 'application/json',
   };
 };
 
-// 模型服务
+// Model service
 export const modelService = {
-  // 获取官方模型列表
+  // Get official model list
   getOfficialModels: async (): Promise<ModelOption[]> => {
     try {
       const response = await fetch(API_ENDPOINTS.modelEngine.officialModelList, {
@@ -82,7 +82,7 @@ export const modelService = {
     }
   },
 
-  // 获取自定义模型列表
+  // Get custom model list
   getCustomModels: async (): Promise<ModelOption[]> => {
     try {
       const response = await fetch(API_ENDPOINTS.modelEngine.customModelList, {
@@ -112,7 +112,7 @@ export const modelService = {
     }
   },
 
-  // 添加自定义模型
+  // Add custom model
   addCustomModel: async (model: {
     name: string
     type: ModelType
@@ -147,10 +147,10 @@ export const modelService = {
     }
   },
 
-  // 删除自定义模型
+  // Delete custom model
   deleteCustomModel: async (modelName: string): Promise<void> => {
     try {
-      // 获取本地会话信息
+      // Get local session information
       const response = await fetch(API_ENDPOINTS.modelEngine.customModelDelete, {
         method: 'POST',
         headers: getHeaders(),
@@ -170,21 +170,21 @@ export const modelService = {
     }
   },
 
-  // 验证模型连接状态
+  // Verify model connection status
   verifyModel: async (modelConfig: SingleModelConfig): Promise<boolean> => {
     try {
       if (!modelConfig.modelName) return false
 
-      // 先获取官方和自定义模型列表
+      // Get official and custom model lists first
       const [officialModels, customModels] = await Promise.all([
         modelService.getOfficialModels(),
         modelService.getCustomModels()
       ])
 
-      // 判断模型是否在官方模型列表中
+      // Determine if the model is in the official model list
       const isOfficialModel = officialModels.some(model => model.name === modelConfig.modelName)
 
-      // 根据模型来源选择不同的验证接口
+      // Select different verification interfaces based on the model source
       const endpoint = isOfficialModel 
         ? API_ENDPOINTS.modelEngine.officialModelHealthcheck(modelConfig.modelName, 2)
         : API_ENDPOINTS.modelEngine.customModelHealthcheck(modelConfig.modelName)
@@ -211,16 +211,16 @@ export const modelService = {
     }
   },
 
-  // 验证自定义模型连接
+  // Verify custom model connection
   verifyCustomModel: async (modelName: string, signal?: AbortSignal): Promise<boolean> => {
     try {
       if (!modelName) return false
 
-      // 调用健康检查API
+      // Call the health check API
       const response = await fetch(API_ENDPOINTS.modelEngine.customModelHealthcheck(modelName), {
         method: "GET",
         headers: getHeaders(),
-        signal // 使用AbortSignal，如果提供的话
+        signal // Use AbortSignal if provided
       })
       
       const result: ApiResponse<{connectivity: boolean}> = await response.json()
@@ -230,10 +230,10 @@ export const modelService = {
       }
       return false
     } catch (error) {
-      // 检查是否是因为请求被取消
+      // Check if the error is due to the request being canceled
       if (error instanceof Error && error.name === 'AbortError') {
         console.warn(`验证模型 ${modelName} 连接被取消`);
-        // 重新抛出中止错误，让调用者知道请求被取消
+        // Re-throw the abort error so the caller knows the request was canceled
         throw error;
       }
       console.error(`验证模型 ${modelName} 连接失败:`, error)
@@ -241,7 +241,7 @@ export const modelService = {
     }
   },
 
-  // 更新模型状态到后端
+  // Update model status to backend
   updateModelStatus: async (modelName: string, status: string): Promise<boolean> => {
     try {
       if (!modelName) {
@@ -258,7 +258,7 @@ export const modelService = {
         })
       });
       
-      // 检查HTTP状态码
+      // Check HTTP status code
       if (!response.ok) {
         console.error(`更新模型状态HTTP错误，状态码: ${response.status}`);
         return false;
@@ -278,10 +278,10 @@ export const modelService = {
     }
   },
 
-  // 同步模型列表
+  // Sync model list
   syncModels: async (): Promise<void> => {
     try {
-      // 尝试同步官方模型，但失败不中断流程
+      // Try to sync official models, but do not interrupt the process if it fails
       try {
         const officialResponse = await fetch(API_ENDPOINTS.modelEngine.officialModelList, {
           method: 'GET',
@@ -297,7 +297,7 @@ export const modelService = {
         console.error('同步ModelEngine模型时发生错误:', officialError);
       }
       
-      // 同步自定义模型，必须成功，否则抛出错误
+      // Sync custom models, must succeed, otherwise throw an error
       const customResponse = await fetch(API_ENDPOINTS.modelEngine.customModelList, {
         method: 'GET',
         headers: getHeaders()
@@ -315,7 +315,7 @@ export const modelService = {
     }
   },
 
-  // 将ModelOption转换为SingleModelConfig
+  // Convert ModelOption to SingleModelConfig
   convertToSingleModelConfig: (modelOption: ModelOption): SingleModelConfig => {
     const config: SingleModelConfig = {
       modelName: modelOption.name,

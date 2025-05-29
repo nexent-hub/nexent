@@ -18,27 +18,27 @@ interface StorageUploadResult {
 
 export const storageService = {
   /**
-   * 上传文件到存储服务
-   * @param files 要上传的文件列表
-   * @param folder 可选的文件夹路径
-   * @returns 上传结果
+   * Upload files to storage service
+   * @param files List of files to upload
+   * @param folder Optional folder path
+   * @returns Upload result
    */
   async uploadFiles(
     files: File[],
     folder: string = 'attachments'
   ): Promise<StorageUploadResult> {
-    // 创建 FormData 对象
+    // Create FormData object
     const formData = new FormData();
     
-    // 添加文件
+    // Add files
     files.forEach(file => {
       formData.append('files', file);
     });
     
-    // 添加文件夹参数
+    // Add folder parameter
     formData.append('folder', folder);
     
-    // 发送请求
+    // Send request
     const response = await fetch(API_ENDPOINTS.storage.upload, {
       method: 'POST',
       body: formData,
@@ -52,10 +52,10 @@ export const storageService = {
   },
   
   /**
-   * 获取文件列表
-   * @param prefix 可选的文件前缀
-   * @param limit 返回的最大文件数量
-   * @returns 文件列表
+   * Get file list
+   * @param prefix Optional file prefix
+   * @param limit Maximum number of files to return
+   * @returns File list
    */
   async getFiles(prefix: string = '', limit: number = 100): Promise<any> {
     const url = new URL(API_ENDPOINTS.storage.files, window.location.origin);
@@ -72,9 +72,9 @@ export const storageService = {
   },
   
   /**
-   * 获取单个文件的URL
-   * @param objectName 文件对象名称
-   * @returns 文件URL
+   * Get the URL of a single file
+   * @param objectName File object name
+   * @returns File URL
    */
   async getFileUrl(objectName: string): Promise<string> {
     const response = await fetch(API_ENDPOINTS.storage.file(objectName));
@@ -88,9 +88,9 @@ export const storageService = {
   },
   
   /**
-   * 删除文件
-   * @param objectName 文件对象名称
-   * @returns 删除结果
+   * Delete file
+   * @param objectName File object name
+   * @returns Delete result
    */
   async deleteFile(objectName: string): Promise<any> {
     const response = await fetch(API_ENDPOINTS.storage.delete(objectName), {

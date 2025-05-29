@@ -9,10 +9,11 @@ from concurrent.futures import ThreadPoolExecutor
 from .task_store import TaskStatus
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("data process")
 
 if TYPE_CHECKING:
     from .async_task_manager import AsyncTaskManager
+
 
 def ensure_ray_initialized():
     if not ray.is_initialized():

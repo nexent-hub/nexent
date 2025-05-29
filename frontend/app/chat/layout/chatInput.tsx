@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
   Paperclip,
   Mic,
@@ -13,7 +12,6 @@ import {
 } from "lucide-react"
 import { conversationService } from '@/services/conversationService'
 import { Textarea } from "@/components/ui/textarea"
-import { RiRobot2Line } from "react-icons/ri"
 import { useConfig } from "@/hooks/useConfig"
 import {
   AiFillFileImage,
@@ -31,7 +29,7 @@ import {
 } from "react-icons/ai"
 import { extractColorsFromUri } from "@/lib/avatar"
 
-// 图片查看器组件
+// Image viewer component
 function ImageViewer({ src, alt, onClose }: { src: string, alt: string, onClose: () => void }) {
   return (
     <div
@@ -55,7 +53,7 @@ function ImageViewer({ src, alt, onClose }: { src: string, alt: string, onClose:
   );
 }
 
-// 文件预览组件
+// File preview component
 function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +61,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
   const fileType = file.type;
   const extension = getFileExtension(file.name);
 
-  // 读取文件内容
+  // Read file content
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -96,7 +94,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
       };
     };
 
-    // 根据文件类型选择适当的读取方法
+    // Select the appropriate read method based on the file type
     if (isTextFile(fileType, extension)) {
       readTextFile();
     } else {
@@ -104,7 +102,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
     }
   }, [file, fileType, extension]);
 
-  // 判断是否为文本文件
+  // Determine if it is a text file
   const isTextFile = (type: string, ext: string) => {
     const textTypes = [
       'text/plain', 'text/html', 'text/css', 'text/javascript',
@@ -119,7 +117,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
     return textTypes.includes(type) || textExtensions.includes(ext);
   };
 
-  // 渲染文件内容
+  // Render file content
   const renderFileContent = () => {
     if (loading) {
       return <div className="text-center py-8">正在加载文件内容...</div>;
@@ -151,7 +149,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
       );
     }
 
-    // 纯文本文件显示
+    // Display pure text files
     if (isTextFile(fileType, extension)) {
       return (
         <div className="bg-gray-50 p-4 rounded-md overflow-auto h-[70vh] whitespace-pre-wrap font-mono text-sm">
@@ -160,7 +158,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
       );
     }
 
-    // 不可预览的文件类型
+    // Files that cannot be previewed
     return (
       <div className="text-center py-16">
         <div className="flex justify-center mb-4">
@@ -201,7 +199,7 @@ function FileViewer({ file, onClose }: { file: File, onClose: () => void }) {
   );
 }
 
-// 添加文件预览类型
+// Add file preview type
 export interface FilePreview {
   id: string;
   file: File;
@@ -211,25 +209,25 @@ export interface FilePreview {
   previewUrl?: string;
 }
 
-// 获取文件扩展名
+// Get file extension
 const getFileExtension = (filename: string): string => {
   return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
 };
 
-// 获取文件图标
+// Get file icon
 const getFileIcon = (file: File) => {
   const extension = getFileExtension(file.name);
   const fileType = file.type;
   const iconSize = 32;
 
-  // 图片文件
+  // Image file
   if (fileType.startsWith('image/')) {
     return <AiFillFileImage size={iconSize} color="#8e44ad" />;
   }
 
-  // 根据扩展名识别
+  // Identify by extension
   switch (extension) {
-    // 文档文件
+    // Document files
     case 'pdf':
       return <AiFillFilePdf size={iconSize} color="#e74c3c" />;
     case 'doc':
@@ -240,18 +238,18 @@ const getFileIcon = (file: File) => {
     case 'md':
       return <AiFillFileMarkdown size={iconSize} color="#34495e" />;
 
-    // 表格文件
+    // Table files
     case 'xls':
     case 'xlsx':
     case 'csv':
       return <AiFillFileExcel size={iconSize} color="#27ae60" />;
 
-    // 演示文件
+    // Demo files
     case 'ppt':
     case 'pptx':
       return <AiFillFilePpt size={iconSize} color="#e67e22" />;
 
-    // 代码文件
+    // Code files
     case 'html':
     case 'htm':
       return <AiFillHtml5 size={iconSize} color="#e67e22" />;
@@ -270,7 +268,7 @@ const getFileIcon = (file: File) => {
     case 'json':
       return <AiFillCode size={iconSize} color="#f1c40f" />;
 
-    // 压缩文件
+    // Compressed files
     case 'zip':
     case 'rar':
     case '7z':
@@ -278,15 +276,15 @@ const getFileIcon = (file: File) => {
     case 'gz':
       return <AiFillFileZip size={iconSize} color="#f39c12" />;
 
-    // 默认文件图标
+    // Default file icon
     default:
       return <AiFillFileUnknown size={iconSize} color="#95a5a6" />;
   }
 };
 
-// 文件限制常量
+// File limit constants
 const MAX_FILE_COUNT = 50;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 单个文件最大5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // Single file maximum 5MB
 
 interface ChatInputProps {
   input: string
@@ -332,22 +330,22 @@ export function ChatInput({
   const [showStopTooltip, setShowStopTooltip] = useState(false);
   const [hasNonImageAttachment, setHasNonImageAttachment] = useState(false);
 
-  // 使用配置钩子获取应用头像
+  // Use the configuration hook to get the application avatar
   const { appConfig, getAppAvatarUrl } = useConfig();
-  const avatarUrl = getAppAvatarUrl(40); // 初始模式下头像大小为 40
+  const avatarUrl = getAppAvatarUrl(40); // Avatar size is 40 in initial mode
 
-  // 当录音状态改变时通知父组件
+  // When the recording status changes, notify the parent component
   useEffect(() => {
     onRecordingStatusChange?.(recordingStatus);
   }, [recordingStatus, onRecordingStatusChange]);
 
-  // 检查是否有非图片附件
+  // Check if there are non-image attachments
   useEffect(() => {
     const nonImageFiles = attachments.filter(attachment => attachment.type !== 'image');
     setHasNonImageAttachment(nonImageFiles.length > 0);
   }, [attachments]);
 
-  // 添加文件拖放事件监听
+  // Add file drag and drop event listener
   useEffect(() => {
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
@@ -359,7 +357,7 @@ export function ChatInput({
       e.preventDefault();
       e.stopPropagation();
 
-      // 检查是否真的离开了拖放区域
+      // Check if it really left the drop area
       if (dropAreaRef.current && !dropAreaRef.current.contains(e.relatedTarget as Node)) {
         setIsDragging(false);
       }
@@ -376,24 +374,24 @@ export function ChatInput({
       e.stopPropagation();
       setIsDragging(false);
 
-      // 处理拖放的文件
+      // Process the files dropped
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
         const files = Array.from(e.dataTransfer.files);
         handleFilesUpload(files);
       }
     };
 
-    // 获取拖放区域
+    // Get the drop area
     const dropArea = dropAreaRef.current;
 
     if (dropArea) {
-      // 添加事件监听器
+      // Add event listeners
       dropArea.addEventListener('dragover', handleDragOver as EventListener);
       dropArea.addEventListener('dragleave', handleDragLeave as EventListener);
       dropArea.addEventListener('dragexit', handleDragExit as EventListener);
       dropArea.addEventListener('drop', handleDrop as EventListener);
 
-      // 清理函数
+      // Cleanup function
       return () => {
         dropArea.removeEventListener('dragover', handleDragOver as EventListener);
         dropArea.removeEventListener('dragleave', handleDragLeave as EventListener);
@@ -403,41 +401,41 @@ export function ChatInput({
     }
   }, []);
 
-  // 添加剪贴板粘贴事件监听
+  // Add clipboard paste event listener
   useEffect(() => {
-    // 使用textarea元素作为粘贴目标
+    // Use the textarea element as the paste target
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     const handlePaste = (e: ClipboardEvent) => {
       if (e.clipboardData && e.clipboardData.items) {
-        // 获取剪贴板中的所有项目
+        // Get all items from the clipboard
         const items = e.clipboardData.items;
         let hasFiles = false;
         const pastedFiles: File[] = [];
 
         for (let i = 0; i < items.length; i++) {
-          // 处理所有文件类型，不仅限于图片
+          // Process all file types, not just images
           if (items[i].kind === 'file') {
             hasFiles = true;
 
-            // 从剪贴板获取文件对象
+            // Get the file object from the clipboard
             const file = items[i].getAsFile();
             if (file) {
-              // 为粘贴的文件生成文件名（如果没有）
+              // Generate a file name for the pasted file (if there is no name)
               let fileName = file.name;
               if (!fileName || fileName === '') {
                 const fileExt = file.type.split('/').pop() || '';
                 fileName = `pasted-file-${Date.now()}.${fileExt}`;
               }
 
-              // 添加到粘贴文件列表
+              // Add to the pasted file list
               pastedFiles.push(new File([file], fileName, { type: file.type }));
             }
           }
         }
 
-        // 如果找到文件，处理它们
+        // If files are found, process them
         if (hasFiles && pastedFiles.length > 0) {
           e.preventDefault();
           handleFilesUpload(pastedFiles);
@@ -445,20 +443,20 @@ export function ChatInput({
       }
     };
 
-    // 只监听textarea的粘贴事件
+    // Only listen to the paste event of the textarea
     textarea.addEventListener('paste', handlePaste);
 
-    // 清理函数
+    // Cleanup function
     return () => {
       textarea.removeEventListener('paste', handlePaste);
     };
   }, [onImageUpload, onFileUpload]);
   
-  // 修改键盘事件处理
+  // Modify keyboard event handling
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // 如果正在录音，先停止录音再发送消息
+      // If recording, stop recording first and then send the message
       if (isRecording && mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -476,35 +474,35 @@ export function ChatInput({
     }
   };
 
-  // 添加自动调整高度的函数
+  // Add a function to automatically adjust the height
   const autoResizeTextarea = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // 重置高度
+    // Reset height
     textarea.style.height = '60px';
 
-    // 获取滚动高度作为新高度
+    // Get the scroll height as the new height
     const scrollHeight = textarea.scrollHeight;
 
-    // 设置新高度，但不超过200px
+    // Set the new height, but not more than 200px
     textarea.style.height = `${Math.min(scrollHeight, 200)}px`;
   };
 
-  // 当输入改变时自动调整高度
+  // When the input changes, automatically adjust the height
   useEffect(() => {
     autoResizeTextarea();
   }, [input]);
 
-  // 在组件渲染后初始化高度
+  // Initialize height after component rendering
   useEffect(() => {
     autoResizeTextarea();
   }, []);
 
-  // 处理录音开始/停止
+  // Handle recording start/stop
   const toggleRecording = async () => {
     if (isRecording) {
-      // 停止录音
+      // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop()
       }
@@ -608,7 +606,7 @@ export function ChatInput({
     }
   }
 
-  // 组件卸载时清理资源
+  // Clean up resources when the component is unloaded
   useEffect(() => {
     return () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
@@ -620,21 +618,21 @@ export function ChatInput({
     }
   }, [])
 
-  // 处理多文件上传的函数
+  // Handle multiple file uploads
   const handleFilesUpload = (files: File[]) => {
-    // 检查文件数量限制
+    // Check file number limit
     if (attachments.length + files.length > MAX_FILE_COUNT) {
       setErrorMessage(`文件数量超过限制，最多只能上传${MAX_FILE_COUNT}个文件`);
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
 
-    // 处理多个文件
+    // Process multiple files
     const newAttachments: FilePreview[] = [];
 
-    // 检查每个文件的大小和类型
+    // Check the size and type of each file
     for (const file of files) {
-      // 检查单个文件大小限制
+      // Check the single file size limit
       if (file.size > MAX_FILE_SIZE) {
         setErrorMessage(`文件"${file.name}"超过大小限制，单个文件最大100MB`);
         setTimeout(() => setErrorMessage(null), 3000);
@@ -644,9 +642,9 @@ export function ChatInput({
       const fileId = Math.random().toString(36).substring(7);
       const extension = getFileExtension(file.name);
 
-      // 只接受图片类型
+      // Only accept image types
       if (file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension)) {
-        // 创建图片预览URL
+        // Create a preview URL for the image
         const previewUrl = URL.createObjectURL(file);
         newAttachments.push({
           id: fileId,
@@ -658,32 +656,32 @@ export function ChatInput({
         });
         onImageUpload?.(file);
       } else {
-        // 显示错误信息
+        // Show error information
         setErrorMessage(`文件"${file.name}"不是支持的文件类型，目前只支持图片文件`);
         setTimeout(() => setErrorMessage(null), 3000);
         return;
       }
     }
 
-    // 使用onAttachmentsChange回调函数更新附件列表
+    // Use the onAttachmentsChange callback function to update the attachment list
     if (onAttachmentsChange && newAttachments.length > 0) {
       onAttachmentsChange([...attachments, ...newAttachments]);
     }
   };
 
-  // 更新文件处理函数
+  // Update file processing function
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // 使用共通的文件处理函数
+    // Use the common file processing function
     handleFilesUpload(Array.from(files));
 
-    // 清除input的值
+    // Clear the value of the input
     e.target.value = '';
   };
 
-  // 清理预览URL
+  // Clean up preview URLs
   useEffect(() => {
     return () => {
       attachments.forEach(attachment => {
@@ -694,25 +692,25 @@ export function ChatInput({
     };
   }, [attachments]);
 
-  // 删除附件
+  // Remove attachment
   const handleRemoveAttachment = (id: string) => {
     if (onAttachmentsChange) {
-      // 查找要删除的附件，用于清理URL
+      // Find the attachment to delete, for cleaning up URLs
       const attachment = attachments.find(a => a.id === id);
       if (attachment?.previewUrl) {
         URL.revokeObjectURL(attachment.previewUrl);
       }
 
-      // 过滤掉删除的附件
+      // Filter out the deleted attachment
       onAttachmentsChange(attachments.filter(a => a.id !== id));
     }
   };
 
-  // 处理查看图片
+  // Handle viewing images
   const handleViewImage = (attachment: FilePreview) => {
     if (attachment.type === 'image' && attachment.file) {
-      // 为确保预览URL有效，重新创建一个新的blob URL
-      // 这样可以避免使用可能已经失效的缓存URL
+      // To ensure the preview URL is valid, create a new blob URL
+      // This avoids using a cached URL that may have expired
       const fileReader = new FileReader();
       fileReader.onload = (e) => {
         if (e.target?.result) {
@@ -727,13 +725,12 @@ export function ChatInput({
     }
   };
 
-  // 处理查看文件
+  // Handle viewing files
   const handleViewFile = (file: File) => {
     setViewingFile(file);
   };
 
-  // 渲染附件预览
-  // 重构：风格被嵌入在组件内
+  // Render attachment preview
   const renderAttachments = () => {
     if (attachments.length === 0) return null;
 
@@ -812,7 +809,7 @@ export function ChatInput({
     );
   };
 
-  // 渲染拖放提示覆盖层
+  // Render drag and drop overlay
   const renderDragOverlay = () => {
     if (!isDragging) return null;
 
@@ -833,7 +830,7 @@ export function ChatInput({
     );
   };
 
-  // 渲染错误提示
+  // Render error message
   const renderErrorMessage = () => {
     if (!errorMessage) return null;
 
@@ -866,7 +863,7 @@ export function ChatInput({
     </div>
     <div className="h-12 bg-slate-100 relative">
       <div className="absolute right-3 top-[40%] -translate-y-1/2 flex items-center space-x-1">
-        {/* 语音转文字按钮 */}
+        {/* Voice to text button */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -886,7 +883,7 @@ export function ChatInput({
           </Tooltip>
         </TooltipProvider>
 
-        {/* 上传文件按钮 */}
+        {/* Upload file button */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -956,7 +953,7 @@ export function ChatInput({
     </div>
   </>
 
-  // 在发送消息前停止录音
+  // Stop recording before sending a message
   const handleSend = () => {
     if (isRecording && mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -969,10 +966,10 @@ export function ChatInput({
     onSend();
   };
 
-  // 常规模式，保持原有的渲染逻辑
+  // Regular mode, keep the original rendering logic
   return (
     <>
-      {/* 图片查看器 */}
+      {/* Image viewer */}
       {viewingImage && (
         <ImageViewer
           src={viewingImage.src}
@@ -981,7 +978,7 @@ export function ChatInput({
         />
       )}
 
-      {/* 文件查看器 */}
+      {/* File viewer */}
       {viewingFile && (
         <FileViewer
           file={viewingFile}
@@ -989,10 +986,10 @@ export function ChatInput({
         />
       )}
 
-      {/* 错误提示 */}
+      {/* Error message */}
       {renderErrorMessage()}
 
-      {/* 聊天输入部分 */}
+      {/* Chat input part */}
       {isInitialMode ? (
         <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto mt-[-80px]">
           <div className="flex flex-col items-center mb-4">

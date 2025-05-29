@@ -4,6 +4,7 @@ import { ReactNode } from "react"
 import { FiRefreshCw, FiArrowLeft } from "react-icons/fi"
 import { Badge, Button, Tooltip } from "antd"
 import { useRouter } from "next/navigation"
+import { BugOutlined } from '@ant-design/icons'
 
 // ================ Header 组件 ================
 interface HeaderProps {
@@ -84,6 +85,7 @@ interface NavigationProps {
   onBackToFirstPage: () => void;
   onCompleteConfig: () => void;
   isSavingConfig: boolean;
+  showDebugButton?: boolean;
 }
 
 function Navigation({
@@ -91,26 +93,31 @@ function Navigation({
   onBackToFirstPage,
   onCompleteConfig,
   isSavingConfig,
+  showDebugButton = false,
 }: NavigationProps) {
   return (
     <div className="mt-3 flex justify-between px-6">
-      {selectedKey !== "1" && (
-        <button
-          onClick={onBackToFirstPage}
-          className={"px-6 py-2.5 rounded-md flex items-center text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"}
-        >
-          上一步
-        </button>
-      )}
+      <div className="flex gap-2">
+        {selectedKey !== "1" && (
+          <button
+            onClick={onBackToFirstPage}
+            className={"px-6 py-2.5 rounded-md flex items-center text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"}
+          >
+            上一步
+          </button>
+        )}
+      </div>
 
-      <button
-        onClick={onCompleteConfig}
-        disabled={isSavingConfig}
-        className={"px-6 py-2.5 rounded-md flex items-center text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"}
-        style={{ border: "none", marginLeft: selectedKey === "1" ? "auto" : undefined }}
-      >
-        {selectedKey === "2" ? (isSavingConfig ? "保存中..." : "完成配置") : "下一步"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={onCompleteConfig}
+          disabled={isSavingConfig}
+          className={"px-6 py-2.5 rounded-md flex items-center text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"}
+          style={{ border: "none" }}
+        >
+          {selectedKey === "3" ? (isSavingConfig ? "保存中..." : "完成配置") : "下一步"}
+        </button>
+      </div>
     </div>
   )
 }
@@ -126,6 +133,7 @@ interface LayoutProps {
   onBackToFirstPage: () => void;
   onCompleteConfig: () => void;
   isSavingConfig: boolean;
+  showDebugButton?: boolean;
 }
 
 function Layout({
@@ -138,6 +146,7 @@ function Layout({
   onBackToFirstPage,
   onCompleteConfig,
   isSavingConfig,
+  showDebugButton = false,
 }: LayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -158,6 +167,7 @@ function Layout({
             onBackToFirstPage={onBackToFirstPage}
             onCompleteConfig={onCompleteConfig}
             isSavingConfig={isSavingConfig}
+            showDebugButton={showDebugButton}
           />
         </div>
       </div>

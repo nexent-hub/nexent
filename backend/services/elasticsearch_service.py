@@ -21,9 +21,10 @@ from nexent.vector_database.elasticsearch_core import ElasticSearchCore
 from nexent.core.nlp.tokenizer import calculate_term_weights
 from fastapi import HTTPException, Query, Body, Path, Depends
 from fastapi.responses import StreamingResponse
-from consts.const import ES_API_KEY, DATA_PROCESS_SERVICE, CREATE_TEST_KB, ES_HOST
+from consts.const import ES_API_KEY, DATA_PROCESS_SERVICE, ES_HOST
 from consts.model import IndexingRequest, SearchRequest, HybridSearchRequest
-from utils.agent_utils import config_manager
+from utils.config_utils import config_manager
+
 from utils.elasticsearch_utils import get_active_tasks_status
 from database.knowledge_db import create_knowledge_record, get_knowledge_record, update_knowledge_record, delete_knowledge_record
 

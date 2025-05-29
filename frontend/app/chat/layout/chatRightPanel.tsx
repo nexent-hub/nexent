@@ -4,13 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExternalLink, Database, X } from "lucide-react"
 import { ChatMessageType } from "@/types/chat"
 import { API_ENDPOINTS } from "@/services/api"
+import { formatDate, formatUrl } from "@/lib/utils"
 
 interface ImageItem {
   base64Data: string;
   contentType: string;
   isLoading: boolean;
   error?: string;
-  loadAttempts?: number; // 加载尝试次数
+  loadAttempts?: number; // Load attempts
 }
 
 interface SearchResult {
@@ -42,22 +43,22 @@ export function ChatRightPanel({
   toggleRightPanel,
   selectedMessageId
 }: ChatRightPanelProps) {
-  // 本地状态
+  // Local state
   const [expandedImages, setExpandedImages] = useState(false)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [processedImages, setProcessedImages] = useState<string[]>([])
   const [viewingImage, setViewingImage] = useState<string | null>(null)
   const [imageData, setImageData] = useState<Record<string, ImageItem>>({})
   
-  // 用来防止重复加载的引用
+  // Reference to prevent duplicate loading
   const loadingImages = useRef<Set<string>>(new Set());
 
-  // 获取当前选中的消息
+  // Get the currently selected message
   const currentMessage = messages.find(msg => msg.id === selectedMessageId);
   
-  // 处理图片加载失败
+  // Handle image load failure
   const handleImageLoadFail = useCallback((imageUrl: string) => {
-    // 标记图片加载失败
+    // Mark image load failure
     setImageData(prev => ({
       ...prev,
       [imageUrl]: {
@@ -67,39 +68,39 @@ export function ChatRightPanel({
       }
     }));
     
-    // 从处理过的图片列表中移除
+    // Remove from the processed image list
     setProcessedImages(prev => prev.filter(url => url !== imageUrl));
     
-    // 调用错误处理函数
+    // Call the error handling function
     onImageError(imageUrl);
   }, [onImageError]);
 
-  // 加载图片
+  // Load image
   const loadImage = async (imageUrl: string) => {
-    // 如果已经在缓存中且不是加载中状态，直接返回
+    // If it is already in the cache and is not loading, return directly
     if (imageData[imageUrl] && !imageData[imageUrl].isLoading) {
       return Promise.resolve();
     }
     
-    // 如果正在加载中，防止重复请求
+    // If it is loading, prevent duplicate requests
     if (loadingImages.current.has(imageUrl)) {
       return Promise.resolve();
     }
     
-    // 标记为正在加载
+    // Mark as loading
     loadingImages.current.add(imageUrl);
     
-    // 获取当前加载尝试次数
+    // Get the current load attempts
     const currentAttempts = imageData[imageUrl]?.loadAttempts || 0;
     
-    // 如果尝试次数过多，不再继续尝试
+    // If the number of attempts is too high, do not continue to try
     if (currentAttempts >= 3) {
       handleImageLoadFail(imageUrl);
       loadingImages.current.delete(imageUrl);
       return Promise.resolve();
     }
     
-    // 标记为加载中
+    // Mark as loading
     setImageData(prev => ({
       ...prev,
       [imageUrl]: {
@@ -111,7 +112,7 @@ export function ChatRightPanel({
     }));
     
     try {
-      // 使用代理服务获取图片
+      // Use the proxy service to get the image
       const response = await fetch(API_ENDPOINTS.proxy.image(imageUrl));
       const data = await response.json();
       
@@ -126,24 +127,24 @@ export function ChatRightPanel({
           }
         }));
       } else {
-        // 如果加载失败，直接从列表中移除
+        // If loading fails, remove it directly from the list
         handleImageLoadFail(imageUrl);
       }
     } catch (error) {
       console.error('请求图片代理服务失败:', error);
-      // 如果加载失败，直接从列表中移除
+      // If loading fails, remove it directly from the list
       handleImageLoadFail(imageUrl);
     } finally {
-      // 无论成功失败，都移除正在加载标记
+      // Whether successful or not, remove the loading mark
       loadingImages.current.delete(imageUrl);
     }
     
     return Promise.resolve();
   };
 
-  // 监听消息变化，更新搜索结果和图片
+  // Listen for message changes, update search results and images
   useEffect(() => {
-    // 处理搜索结果
+    // Process search results
     if (currentMessage?.searchResults && Array.isArray(currentMessage.searchResults)) {
       try {
         const results = currentMessage.searchResults.map(result => {
@@ -168,19 +169,19 @@ export function ChatRightPanel({
       setSearchResults([]);
     }
     
-    // 处理图片
+    // Process images
     if (currentMessage?.images && Array.isArray(currentMessage.images)) {
-      // 获取并去重图片
+      // Get and remove duplicates
       const allImages = currentMessage.images;
       
-      // 过滤掉已经标记为加载失败的图片
+      // Filter out images that have been marked as failed to load
       const validImages = allImages.filter(imageUrl => {
         return !(imageData[imageUrl] && imageData[imageUrl].error);
       });
       
       setProcessedImages(validImages);
       
-      // 预加载图片，但只加载尚未加载的图片
+      // Preload images, but only load images that are not loaded yet
       const loadPromises = validImages.map(imageUrl => {
         if (!imageData[imageUrl] || (imageData[imageUrl].error === undefined && !imageData[imageUrl].isLoading)) {
           return loadImage(imageUrl);
@@ -188,7 +189,7 @@ export function ChatRightPanel({
         return Promise.resolve();
       });
       
-      // 并行加载所有图片
+      // Load all images in parallel
       Promise.all(loadPromises).catch(error => {
         console.error('并行加载图片时出错:', error);
       });
@@ -197,53 +198,14 @@ export function ChatRightPanel({
     }
   }, [currentMessage?.searchResults, currentMessage?.images, selectedMessageId]);
 
-  // 辅助函数 - 格式化日期
-  // 重构：通用服务函数，是否归纳到utils中
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) {
-        return ""
-      }
-      return date.toLocaleDateString('zh-CN', {
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric'
-      })
-    } catch (error) {
-      return ""
-    }
-  }
-
-  // 辅助函数 - 格式化URL显示
-  // 重构：通用服务函数，是否归纳到utils中
-  const formatUrl = (result: SearchResult) => {
-    try {
-      if (!result.source_type) return ""
-      
-      if (result.source_type === "url") {
-        if (!result.url || result.url === "#") return ""
-        return result.url.replace(/(^\w+:|^)\/\//, '').split('/')[0]
-      } else if (result.source_type === "file") {
-        if (!result.filename) return ""
-        return result.filename
-      }
-      return ""
-    } catch (error) {
-      return ""
-    }
-  }
-
-  // 处理图片点击
+  // Handle image click
   const handleImageClick = (imageUrl: string) => {
     setViewingImage(imageUrl);
   };
 
-  // 搜索结果项组件
+  // Search result item component
   const SearchResultItem = ({ result, index }: { result: SearchResult, index: number }) => {
     const [isExpanded, setIsExpanded] = useState(false)
-
-    // 确保所有必需的字段都有值
     const title = result.title || "未知标题";
     const url = result.url || "#";
     const text = result.text || "无内容描述";
@@ -310,11 +272,11 @@ export function ChatRightPanel({
     )
   }
 
-  // 渲染图片组件
+  // Render image component
   const renderImage = (imageUrl: string, index: number) => {
     const item = imageData[imageUrl];
     
-    // 如果图片正在加载中
+    // If the image is loading
     if (!item || item.isLoading) {
       return (
         <div className="flex items-center justify-center w-full h-32 bg-gray-100">
@@ -323,31 +285,30 @@ export function ChatRightPanel({
       );
     }
     
-    // 如果图片加载失败，我们不应该显示它，但由于前面已经过滤，这里只是为了安全
+    // If the image loading fails, we should not display it, but since it has been filtered out earlier, this is just for safety
     if (item.error || !item.base64Data) {
       return null;
     }
     
-    // 返回base64图片
+    // Return base64 image
     return (
       <img
         src={`data:${item.contentType};base64,${item.base64Data}`}
         alt={`图片 ${index + 1}`}
         className="w-full h-32 object-cover"
         onError={(e) => {
-          // 标记为图片加载失败并从列表中移除
+          // Mark the image as failed to load and remove it from the list
           handleImageLoadFail(imageUrl);
         }}
       />
     );
   };
 
-  // 重构：风格被嵌入在组件内
   return (
     <div className={`transition-all duration-300 ease-in-out ${
       isVisible ? 'lg:block w-[400px]' : 'lg:block w-0 opacity-0'
     } hidden border-l bg-background relative`}>
-      {/* 图片查看器模态框 */}
+      {/* Image viewer modal */}
       {viewingImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setViewingImage(null)}>
           <div className="relative max-w-[90vw] max-h-[90vh]">

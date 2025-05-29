@@ -10,7 +10,7 @@ from utils.config_utils import config_manager, get_env_key, safe_value, safe_lis
 router = APIRouter(prefix="/config")
 
 # Get logger instance
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app config")
 
 @router.post("/save_config")
 async def save_config(config: GlobalConfig):

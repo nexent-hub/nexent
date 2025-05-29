@@ -9,12 +9,12 @@ import { ChatStreamFinalMessage } from "./chatStreamFinalMessage"
 import { TaskWindow } from "./taskWindow"
 import { conversationService } from '@/services/conversationService'
 
-// 定义新的消息处理结构
+// Define a new message processing structure
 interface ProcessedMessages {
-  finalMessages: ChatMessageType[];  // 用户消息和最终回答
-  taskMessages: any[];  // 任务消息，用于任务窗口
-  // 添加对话组映射
-  conversationGroups: Map<string, any[]>; // 用户消息ID -> 相关任务消息
+  finalMessages: ChatMessageType[];  // User messages and final answers
+  taskMessages: any[];  // Task messages, used for task windows
+  // Add conversation group mapping
+  conversationGroups: Map<string, any[]>; // User message ID -> related task messages
 }
 
 interface ChatStreamMainProps {
@@ -79,7 +79,7 @@ export function ChatStreamMain({
     const taskMsgs: any[] = [];
     const conversationGroups = new Map<string, any[]>();
     
-    // 先预处理，找出所有的用户消息ID并初始化任务组
+    // First preprocess, find all user message IDs and initialize task groups
     messages.forEach(message => {
       if (message.role === "user" && message.id) {
         conversationGroups.set(message.id, []);
@@ -89,32 +89,32 @@ export function ChatStreamMain({
     let currentUserMsgId: string | null = null;
     let lastUserMsgId: string | null = null;
     
-    // 处理所有消息，区分用户消息、最终回答和任务消息
+    // Process all messages, distinguish user messages, final answers, and task messages
     messages.forEach(message => {
-      // 用户消息直接加入最终消息数组
+      // User messages are directly added to the final message array
       if (message.role === "user") {
         finalMsgs.push(message);
-        // 记录用户消息ID，用于关联后续任务
+        // Record the user message ID, used to associate subsequent tasks
         if (message.id) {
-          lastUserMsgId = currentUserMsgId; // 保存上一个用户消息ID
+          lastUserMsgId = currentUserMsgId; // Save the last user message ID
           currentUserMsgId = message.id;
           
-          // 保存最新的用户消息ID到ref中
+          // Save the latest user message ID to the ref
           lastUserMessageIdRef.current = message.id;
         }
       } 
-      // 助手消息需要进一步处理
+      // Assistant messages need further processing
       else if (message.role === "assistant") {
-        // 如果有最终回答，加入最终消息数组
+        // If there is a final answer, add it to the final message array
         if (message.finalAnswer) {
           finalMsgs.push(message);
-          // 不要在这里重置currentUserMsgId，需要继续使用它来关联任务
+          // Do not reset currentUserMsgId here, continue to use it to associate tasks
         }
         
-        // 处理所有步骤和内容作为任务消息
+        // Process all steps and content as task messages
         if (message.steps && message.steps.length > 0) {
           message.steps.forEach(step => {
-            // 处理step.contents（如果存在）
+            // Process step.contents (if it exists)
             if (step.contents && step.contents.length > 0) {
               step.contents.forEach((content: any) => {
                 const taskMsg = {
@@ -126,7 +126,7 @@ export function ChatStreamMain({
                 };
                 taskMsgs.push(taskMsg);
                 
-                // 如果有关联的用户消息，添加到对应的任务组
+                // If there is a related user message, add it to the corresponding task group
                 if (currentUserMsgId && conversationGroups.has(currentUserMsgId)) {
                   const tasks = conversationGroups.get(currentUserMsgId) || [];
                   tasks.push(taskMsg);
@@ -135,7 +135,7 @@ export function ChatStreamMain({
               });
             }
             
-            // 处理step.thinking（如果存在）
+            // Process step.thinking (if it exists)
             if (step.thinking && step.thinking.content) {
               const taskMsg = {
                 type: "model_output_thinking",
@@ -146,7 +146,7 @@ export function ChatStreamMain({
               };
               taskMsgs.push(taskMsg);
               
-              // 如果有关联的用户消息，添加到对应的任务组
+              // If there is a related user message, add it to the corresponding task group
               if (currentUserMsgId && conversationGroups.has(currentUserMsgId)) {
                 const tasks = conversationGroups.get(currentUserMsgId) || [];
                 tasks.push(taskMsg);
@@ -154,7 +154,7 @@ export function ChatStreamMain({
               }
             }
             
-            // 处理step.code（如果存在）
+            // Process step.code (if it exists)
             if (step.code && step.code.content) {
               const taskMsg = {
                 type: "model_output_code",
@@ -165,7 +165,7 @@ export function ChatStreamMain({
               };
               taskMsgs.push(taskMsg);
               
-              // 如果有关联的用户消息，添加到对应的任务组
+              // If there is a related user message, add it to the corresponding task group
               if (currentUserMsgId && conversationGroups.has(currentUserMsgId)) {
                 const tasks = conversationGroups.get(currentUserMsgId) || [];
                 tasks.push(taskMsg);
@@ -173,7 +173,7 @@ export function ChatStreamMain({
               }
             }
             
-            // 处理step.output（如果存在）
+            // Process step.output (if it exists)
             if (step.output && step.output.content) {
               const taskMsg = {
                 type: "tool",
@@ -184,7 +184,7 @@ export function ChatStreamMain({
               };
               taskMsgs.push(taskMsg);
               
-              // 如果有关联的用户消息，添加到对应的任务组
+              // If there is a related user message, add it to the corresponding task group
               if (currentUserMsgId && conversationGroups.has(currentUserMsgId)) {
                 const tasks = conversationGroups.get(currentUserMsgId) || [];
                 tasks.push(taskMsg);
@@ -194,7 +194,7 @@ export function ChatStreamMain({
           });
         }
         
-        // 处理thinking状态（如果存在）
+        // Process thinking status (if it exists)
         if (message.thinking && message.thinking.length > 0) {
           message.thinking.forEach((thinking, index) => {
             const taskMsg = {
@@ -206,7 +206,7 @@ export function ChatStreamMain({
             };
             taskMsgs.push(taskMsg);
             
-            // 如果有关联的用户消息，添加到对应的任务组
+            // If there is a related user message, add it to the corresponding task group
             if (currentUserMsgId && conversationGroups.has(currentUserMsgId)) {
               const tasks = conversationGroups.get(currentUserMsgId) || [];
               tasks.push(taskMsg);
@@ -217,7 +217,7 @@ export function ChatStreamMain({
       }
     });
     
-    // 检查并删除空的任务组
+    // Check and delete empty task groups
     for (const [key, value] of conversationGroups.entries()) {
       if (value.length === 0) {
         conversationGroups.delete(key);
@@ -231,7 +231,7 @@ export function ChatStreamMain({
     });
   }, [messages]);
   
-  // 监听滚动事件
+  // Listen for scroll events
   useEffect(() => {
     const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     
@@ -241,7 +241,7 @@ export function ChatStreamMain({
       const { scrollTop, scrollHeight, clientHeight } = scrollAreaElement as HTMLElement;
       const distanceToBottom = scrollHeight - scrollTop - clientHeight;
       
-      // 显示/隐藏回到底部按钮
+      // Show/hide the scroll to bottom button
       if (distanceToBottom > 100) {
         setShowScrollButton(true);
       } else {
@@ -256,10 +256,10 @@ export function ChatStreamMain({
       }
     };
     
-    // 添加滚动事件监听
+    // Add scroll event listener
     scrollAreaElement.addEventListener('scroll', handleScroll);
     
-    // 初始化时执行一次检查
+    // Execute a check once on initialization
     handleScroll();
     
     return () => {
@@ -267,12 +267,12 @@ export function ChatStreamMain({
     };
   }, []);
 
-  // 滚动到底部函数
+  // Scroll to bottom function
   const scrollToBottom = (smooth = false) => {
     const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollAreaElement) return;
     
-    // 使用setTimeout确保在DOM更新后滚动
+    // Use setTimeout to ensure scrolling after DOM updates
     setTimeout(() => {
       if (scrollAreaElement) {
         if (smooth) {
@@ -287,21 +287,21 @@ export function ChatStreamMain({
     }, 0);
   };
 
-  // 处理点赞/点踩
+  // Handle likes/dislikes
   const handleOpinionChange = async (messageId: number, opinion: 'Y' | 'N' | null) => {
     if (onOpinionChange) {
       onOpinionChange(messageId, opinion);
     }
   };
 
-  // 在消息更新时滚动到底部（如果用户已经在底部）
+  // Scroll to bottom when messages are updated (if user is already at the bottom)
   useEffect(() => {
     if (processedMessages.finalMessages.length > 0) {
       scrollToBottom();
     }
   }, [processedMessages.finalMessages.length, processedMessages.conversationGroups.size]);
 
-  // 在任务消息更新时也滚动到底部
+  // Scroll to bottom when task messages are updated
   useEffect(() => {
     const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollAreaElement) return;
@@ -309,27 +309,27 @@ export function ChatStreamMain({
     const { scrollTop, scrollHeight, clientHeight } = scrollAreaElement as HTMLElement;
     const distanceToBottom = scrollHeight - scrollTop - clientHeight;
     
-    // 如果用户已经在底部附近或者正在流式输出，则自动滚动
+    // If the user is already at the bottom or is streaming, automatically scroll
     if (distanceToBottom < 100 || isStreaming) {
       scrollToBottom();
     }
   }, [processedMessages.taskMessages.length, isStreaming]);
 
-  // 检查当前是否正在进行流式响应
+  // Check if current streaming response is in progress
   const isInStreamingConversation = () => {
-    // 检查最后一条消息是否是用户消息
+    // Check if the last message is a user message
     if (processedMessages.finalMessages.length === 0) return false;
     
     const lastMessage = processedMessages.finalMessages[processedMessages.finalMessages.length - 1];
     const isLastMessageFromUser = lastMessage.role === "user";
     
-    // 如果是流式响应状态且最后一条是用户消息，则正在进行流式响应
+    // If the streaming response status is in progress and the last message is a user message, then the streaming response is in progress
     return isStreaming && isLastMessageFromUser;
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
-      {/* 主要消息区域 */}
+      {/* Main message area */}
       <ScrollArea className="flex-1 px-4 pt-4" ref={scrollAreaRef}>
         <div className="max-w-3xl mx-auto">
           {processedMessages.finalMessages.length === 0 ? (
@@ -380,12 +380,12 @@ export function ChatStreamMain({
         </div>
       </ScrollArea>
 
-      {/* 顶部渐变虚化效果 */}
+      {/* Top fade effect */}
       {showTopFade && (
         <div className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 bg-gradient-to-b from-background to-transparent"></div>
       )}
 
-      {/* 滚动到底部按钮 */}
+      {/* Scroll to bottom button */}
       {showScrollButton && (
         <Button
           variant="outline"
@@ -402,7 +402,7 @@ export function ChatStreamMain({
         </Button>
       )}
 
-      {/* 非初始模式下的输入框 */}
+      {/* Input box in non-initial mode */}
       {processedMessages.finalMessages.length > 0 && (
         <ChatInput
           input={input}

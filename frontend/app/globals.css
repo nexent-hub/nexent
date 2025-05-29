@@ -68,21 +68,21 @@
   }
 }
 
-/* 添加Markdown样式 */
+/* Add Markdown styles */
 @layer components {
-  /* 最终回答内容的样式 */
+  /* Styles for final answer content */
   .final-answer-content {
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: break-word;
   }
   
-  /* Markdown内容容器样式 */
+  /* Styles for Markdown content container */
   .markdown-content {
     @apply text-sm leading-relaxed;
   }
   
-  /* Markdown标题样式 */
+  /* Styles for Markdown title */
   .markdown-content h1 {
     @apply text-2xl font-bold mt-6 mb-4;
   }
@@ -107,13 +107,13 @@
     @apply text-xs font-bold mt-2 mb-1;
   }
   
-  /* 段落样式 */
+  /* Styles for paragraph */
   .markdown-content p {
     @apply my-2;
     white-space: pre-wrap;
   }
   
-  /* 列表样式 */
+  /* Styles for list */
   .markdown-content ul {
     @apply list-disc ml-5 my-2;
   }
@@ -122,36 +122,36 @@
     @apply list-decimal ml-5 my-2;
   }
   
-  /* 列表项样式 */
+  /* Styles for list item */
   .markdown-content li {
     @apply my-1;
     display: list-item;
     padding-left: 0.5rem;
   }
 
-  /* 列表项内容不换行 */
+  /* Styles for list item content */
   .markdown-content li > * {
     display: inline;
   }
   
-  /* 列表项内容样式 */
+  /* Styles for list item content */
   .markdown-content .li-content {
     display: inline;
   }
   
-  /* 粗体文本样式 */
+  /* Styles for bold text */
   .markdown-content strong {
     @apply font-bold;
     display: inline;
     white-space: normal;
   }
   
-  /* 修复列表项中粗体文本的显示 */
+  /* Fix the display of bold text in list items */
   .markdown-content li strong {
     display: inline;
   }
   
-  /* 代码块样式 */
+  /* Styles for code block */
   .markdown-content pre {
     @apply bg-gray-100 p-3 rounded my-3 overflow-x-auto;
     display: block;
@@ -161,19 +161,19 @@
     @apply bg-gray-100 px-1 rounded text-sm font-mono;
   }
   
-  /* 单独成段的代码块 */
+  /* Styles for code block that is a separate paragraph */
   .markdown-content li > pre {
     display: block;
     margin-top: 0.5rem;
   }
   
-  /* 引用块样式 */
+  /* Styles for blockquote */
   .markdown-content blockquote {
     @apply border-l-4 border-gray-300 pl-4 py-1 my-2 bg-gray-50 italic;
     display: block;
   }
   
-  /* 表格样式 */
+  /* Styles for table */
   .markdown-content table {
     @apply min-w-full border-collapse border border-gray-300 my-4;
     display: table;
@@ -187,27 +187,27 @@
     @apply px-4 py-2 border border-gray-300;
   }
   
-  /* 水平线样式 */
+  /* Styles for horizontal line */
   .markdown-content hr {
     @apply my-4 border-t border-gray-300;
     display: block;
   }
   
-  /* 链接样式 */
+  /* Styles for link */
   .markdown-content a {
     @apply text-blue-600 hover:underline;
     display: inline;
   }
   
-  /* 图片样式 */
+  /* Styles for image */
   .markdown-content img {
     @apply max-w-full h-auto my-2 rounded;
     display: block;
   }
 }
 
-/* 滚动条样式 */
-/* 针对Webkit浏览器（Chrome, Safari, Edge等） */
+/* Scrollbar styles */
+/* For Webkit browsers (Chrome, Safari, Edge, etc.) */
 ::-webkit-scrollbar {
   width: 16px;
   background-color: transparent;
@@ -224,8 +224,25 @@
   background-clip: content-box;
 }
 
-/* 针对Firefox */
+/* For Firefox */
 * {
   scrollbar-color: rgba(0, 0, 0, 0.4) transparent;
+}
+
+/* Force markdown content to wrap and adapt to width */
+.markdown-content,
+.markdown-content * {
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  max-width: 100%;
+}
+
+.markdown-content pre,
+.markdown-content code {
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  max-width: 100%;
 }
 

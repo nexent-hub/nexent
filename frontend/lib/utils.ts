@@ -5,28 +5,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// 获取状态优先级
+// Get status priority
 function getStatusPriority(status: string): number {
   switch (status) {
-    case 'FORWARDING':  // 入库中
+    case 'FORWARDING':  // In the library
       return 1;
-    case 'PROCESSING':  // 解析中
+    case 'PROCESSING':  // Parsing
       return 2;
-    case 'WAITING':     // 等待解析
+    case 'WAITING':     // Waiting for parsing
       return 3;
-    case 'COMPLETED':   // 解析完成
+    case 'COMPLETED':   // Parsing completed
       return 4;
-    case 'FAILED':      // 解析失败
+    case 'FAILED':      // Parsing failed
       return 5;
     default:
       return 6;
   }
 }
 
-// 按状态和日期排序
+// Sort by status and date
 export function sortByStatusAndDate<T extends { status: string; create_time: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => {
-    // 首先按状态优先级排序
+    // First sort by status priority
     const statusPriorityA = getStatusPriority(a.status);
     const statusPriorityB = getStatusPriority(b.status);
     
@@ -34,14 +34,14 @@ export function sortByStatusAndDate<T extends { status: string; create_time: str
       return statusPriorityA - statusPriorityB;
     }
     
-    // 状态相同时，按日期排序（从新到旧）
+    // When the status is the same, sort by date (from new to old)
     const dateA = new Date(a.create_time).getTime();
     const dateB = new Date(b.create_time).getTime();
     return dateB - dateA;
   });
 }
 
-// 格式化文件大小
+// Format file size
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -50,7 +50,7 @@ export function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-// 格式化日期时间
+// Format date time
 export function formatDateTime(dateString: string): string {
   try {
     const date = new Date(dateString);
@@ -64,5 +64,46 @@ export function formatDateTime(dateString: string): string {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   } catch (e) {
     return dateString;
+  }
+}
+
+// Format date
+export function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return ""
+    }
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric'
+    })
+  } catch (error) {
+    return ""
+  }
+}
+
+// Format URL display
+export interface SearchResultUrl {
+  source_type?: string;
+  url?: string;
+  filename?: string;
+}
+
+export function formatUrl(result: SearchResultUrl): string {
+  try {
+    if (!result.source_type) return ""
+    
+    if (result.source_type === "url") {
+      if (!result.url || result.url === "#") return ""
+      return result.url.replace(/(^\w+:|^)\/\//, '').split('/')[0]
+    } else if (result.source_type === "file") {
+      if (!result.filename) return ""
+      return result.filename
+    }
+    return ""
+  } catch (error) {
+    return ""
   }
 }

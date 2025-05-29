@@ -90,7 +90,7 @@ load_dotenv()
 #     return "\n\n".join(result.text for result in results)
 
 @mcp.tool(name="test_tool_name", description="test_tool_description")
-async def test_tool(para_1: str, para_2: int, para_3: List[str], para_4: dict, para_5: bool) -> str:
+async def demo_tool(para_1: str, para_2: int, para_3: List[str], para_4: dict, para_5: bool) -> str:
     time.sleep(1)
     return ""
 

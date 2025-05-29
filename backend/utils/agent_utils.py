@@ -1,18 +1,14 @@
 import time
 import logging
+
 from threading import Lock, Thread
 from typing import List, Dict
 
 from nexent.core.agents import CoreAgent
-from nexent.core.utils.agent_utils import agent_run_with_observer
 from smolagents import TaskStep, ActionStep
 
-from utils.config_utils import config_manager
-
-from smolagents import ToolCollection
-from fastapi import HTTPException
-
-from utils.agent_create_factory import AgentCreateFactory
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("agent_util")
 
 
 class ThreadManager:
@@ -23,18 +19,18 @@ class ThreadManager:
         self.lock = Lock()
 
     def add_thread(self, thread_id: str, thread: Thread):
-        """Add a new thread"""
+        """Add a new thread to the manager with its ID and start time"""
         with self.lock:
             self.active_threads[thread_id] = {'thread': thread, 'start_time': time.time()}
 
     def remove_thread(self, thread_id: str):
-        """Remove a thread"""
+        """Remove a thread from the manager by its ID"""
         with self.lock:
             if thread_id in self.active_threads:
                 del self.active_threads[thread_id]
 
     def stop_thread(self, thread_id: str):
-        """Stop a thread"""
+        """Stop a running thread by its ID and remove it from the manager"""
         with self.lock:
             if thread_id in self.active_threads:
                 thread_data = self.active_threads[thread_id]
@@ -45,8 +41,15 @@ class ThreadManager:
 # Create global thread manager instance
 thread_manager = ThreadManager()
 
+
 def add_history_to_agent(agent: CoreAgent, history: List[Dict]):
-    """Add conversation history to agent's memory"""
+    """
+    Add conversation history to agent's memory
+    
+    Args:
+        agent: The CoreAgent instance to update
+        history: List of conversation messages with role and content
+    """
     if not history:
         return
 
@@ -60,21 +63,3 @@ def add_history_to_agent(agent: CoreAgent, history: List[Dict]):
             agent.memory.steps.append(ActionStep(action_output=msg['content'], model_output=msg['content']))
 
 
-def agent_run_thread(observer, query, history=None):
-    try:
-        mcp_host = config_manager.get_config("MCP_SERVICE")
-        agent_create_json = config_manager.get_config("AGENT_CREATE_FILE")
-        logging.info(f"mcp_host: {mcp_host}")
-
-        with ToolCollection.from_mcp({"url": mcp_host}) as tool_collection:
-            factory = AgentCreateFactory(observer=observer,
-                                         mcp_tool_collection=tool_collection)
-            agent = factory.create_from_json(agent_create_json)
-            add_history_to_agent(agent, history)
-            # print(agent.write_memory_to_messages())
-
-            agent_run_with_observer(agent=agent, query=query, reset=False)
-
-    except Exception as e:
-        print(f"mcp connection error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"MCP server not connected: {str(e)}")

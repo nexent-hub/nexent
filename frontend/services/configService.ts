@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from './api';
 import { ConfigStore } from '@/lib/config';
 
 export class ConfigService {
-  // 保存全局配置到后端
+  // Save global configuration to backend
   async saveConfigToBackend(config: GlobalConfig): Promise<boolean> {
     try {
       const response = await fetch(API_ENDPOINTS.config.save, {
@@ -28,7 +28,7 @@ export class ConfigService {
     }
   }
 
-  // 新增：从后端加载配置并写入 localStorage
+  // Add: Load configuration from backend and write to localStorage
   async loadConfigToFrontend(): Promise<boolean> {
     try {
       const response = await fetch(API_ENDPOINTS.config.load, {
@@ -45,10 +45,10 @@ export class ConfigService {
       const result = await response.json();
       const config = result.config;
       if (config) {
-        // 使用 configStore 的转化函数
+        // Use the conversion function of configStore
         const frontendConfig = ConfigStore.transformBackend2Frontend(config);
 
-        // 分别写入 localStorage
+        // Write to localStorage separately
         if (frontendConfig.app) localStorage.setItem('app', JSON.stringify(frontendConfig.app));
         if (frontendConfig.models) localStorage.setItem('model', JSON.stringify(frontendConfig.models));
         if (frontendConfig.data) localStorage.setItem('data', JSON.stringify(frontendConfig.data));
@@ -62,5 +62,5 @@ export class ConfigService {
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const configService = new ConfigService(); 

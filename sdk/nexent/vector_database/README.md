@@ -12,7 +12,6 @@ ELASTICSEARCH_API_KEY=your_api_key_here
 JINA_API_URL=https://api.jina.ai/v1/embeddings
 JINA_MODEL=jian_model_name
 JINA_API_KEY=your_jina_api_key_here
-CREATE_TEST_KB=False
 ```
 
 2. 安装依赖:
@@ -253,7 +252,6 @@ es_core = ElasticSearchCore(
     api_key="your_api_key",
     verify_certs=False,
     ssl_show_warn=False,
-    init_test_kb=True  # 是否初始化测试知识库
 )
 ```
 

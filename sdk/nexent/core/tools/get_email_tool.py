@@ -6,6 +6,7 @@ from email.header import decode_header
 from typing import List
 
 from smolagents.tools import Tool
+from pydantic import Field
 
 
 class GetEmailTool(Tool):
@@ -21,8 +22,12 @@ class GetEmailTool(Tool):
                        "default": 10, "nullable": True}}
     output_type = "string"
 
-    def __init__(self, imap_server: str, imap_port: int, username: str, password: str, use_ssl: bool = True,
-            timeout: int = 30):
+    def __init__(self, imap_server: str=Field(description="IMAP服务器地址"),
+                 imap_port: int=Field(description="IMAP服务器端口"), 
+                 username: str=Field(description="IMAP服务器用户名"), 
+                 password: str=Field(description="IMAP服务器密码"), 
+                 use_ssl: bool=Field(description="是否使用SSL", default=True),
+                 timeout: int = Field(description="超时时间", default=30)):
         super().__init__()
         self.imap_server = imap_server
         self.imap_port = imap_port

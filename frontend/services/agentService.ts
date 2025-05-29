@@ -8,7 +8,7 @@ const getHeaders = () => {
 };
 
 export const agentService = {
-  // 运行Agent并返回ReadableStream
+  // Run Agent and return ReadableStream
   async run(params: {
     query: string;
     conversation_id: number;

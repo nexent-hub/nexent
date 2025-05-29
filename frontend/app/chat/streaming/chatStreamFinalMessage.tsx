@@ -17,6 +17,7 @@ interface FinalMessageProps {
   imagesCount?: number
   onImageClick?: (imageUrl: string) => void
   onOpinionChange?: (messageId: number, opinion: 'Y' | 'N' | null) => void
+  hideButtons?: boolean
   index?: number
   currentConversationId?: number
 }
@@ -29,18 +30,19 @@ export function ChatStreamFinalMessage({
   imagesCount = 0,
   onImageClick,
   onOpinionChange,
+  hideButtons = false,
   index,
   currentConversationId,
 }: FinalMessageProps) {
   const { getAppAvatarUrl } = useConfig();
-  const avatarUrl = getAppAvatarUrl(20);
+  const avatarUrl = getAppAvatarUrl(20); // Message avatar size is 20px
   
   const messageRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [localOpinion, setLocalOpinion] = useState<string | null>(message.opinion_flag ?? null);
   const [isVisible, setIsVisible] = useState(false);
   
-  // animation effect - fade in when message comes in
+  // Animation effect - message enters and fades in
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -48,12 +50,12 @@ export function ChatStreamFinalMessage({
     return () => clearTimeout(timer);
   }, []);
 
-  // update opinion status
+  // Update opinion status
   useEffect(() => {
     setLocalOpinion(message.opinion_flag ?? null);
   }, [message.opinion_flag]);
 
-  // copy content to clipboard
+  // Copy content to clipboard
   const handleCopyContent = () => {
     if (message.finalAnswer) {
       navigator.clipboard.writeText(message.finalAnswer)
@@ -67,13 +69,13 @@ export function ChatStreamFinalMessage({
     }
   };
 
-  // likes handling
+  // Handle thumbs up
   const handleThumbsUp = async () => {
     const newOpinion = localOpinion === 'Y' ? null : 'Y';
     setLocalOpinion(newOpinion);
-    
+
     let messageId = message.message_id;
-    
+
     // If the message_id does not exist, fetch/obtain it via getMessageId.
     if (!messageId && typeof currentConversationId === 'number' && typeof index === 'number') {
       try {
@@ -83,13 +85,13 @@ export function ChatStreamFinalMessage({
         return;
       }
     }
-    
+
     if (onOpinionChange && messageId) {
       onOpinionChange(messageId, newOpinion as 'Y' | 'N' | null);
     }
   };
 
-  // handle thumbs down
+  // Handle thumbs down
   const handleThumbsDown = () => {
     const newOpinion = localOpinion === 'N' ? null : 'N';
     setLocalOpinion(newOpinion);
@@ -98,7 +100,7 @@ export function ChatStreamFinalMessage({
     }
   };
 
-  // handle message select
+  // Handle message selection
   const handleMessageSelect = () => {
     if (message.id && onSelectMessage) {
       onSelectMessage(message.id);
@@ -112,29 +114,29 @@ export function ChatStreamFinalMessage({
         message.role === "user" ? 'flex-row-reverse' : ''
       } ${!isVisible ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}
     >
-      {/* message content part */}
+      {/* Message content part */}
       <div className={`${
         message.role === "user" 
           ? 'flex items-end flex-col w-full' 
           : 'w-full'
       }`}>
-        {/* user message part */}
+        {/* User message part */}
         {message.role === "user" && (
           <>
-            {/* attachment part - put above text */}
+            {/* Attachment part - placed above text */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-2 w-full flex justify-end">
                 <div className="max-w-[80%]">
                   <ChatAttachment 
                     attachments={message.attachments as AttachmentItem[]} 
                     onImageClick={onImageClick}
-                    className="justify-end" // 靠右对齐
+                    className="justify-end" // Align right
                   />
                 </div>
               </div>
             )}
             
-            {/* text content */}
+            {/* Text content */}
             {message.content && (
               <div className="rounded-lg border bg-blue-50 border-blue-100 user-message-container px-3 ml-auto text-sm">
                 <MarkdownRenderer 
@@ -146,7 +148,7 @@ export function ChatStreamFinalMessage({
           </>
         )}
         
-        {/* assistant message part - only show final answer */}
+        {/* Assistant message part - only show final answer */}
         {message.role === "assistant" && message.finalAnswer && (
           <div className="bg-white rounded-lg w-full -mt-2">
             <MarkdownRenderer 
@@ -154,104 +156,106 @@ export function ChatStreamFinalMessage({
               searchResults={message.searchResults}
             />
             
-            {/* button group */}
-            <div className="flex items-center justify-between mt-3">
-              {/* source button */}
-              <div className="flex-1">
-                {((message.searchResults && message.searchResults.length > 0) || (message.images && message.images.length > 0)) && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`flex items-center gap-1 p-1 pl-3 hover:bg-gray-100 rounded transition-all duration-200 border border-gray-200 ${
-                        isSelected ? 'bg-gray-100' : ''
-                      }`}
-                      onClick={handleMessageSelect}
-                    >
-                      <span>
-                        {`${searchResultsCount ? `${searchResultsCount}条来源` : ""}${searchResultsCount && imagesCount ? "，" : ""}${imagesCount ? `${imagesCount}张图片` : ""}`}
-                      </span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+            {/* Button group - only show when hideButtons is false */}
+            {!hideButtons && (
+              <div className="flex items-center justify-between mt-3">
+                {/* Source button */}
+                <div className="flex-1">
+                    {((message.searchResults && message.searchResults.length > 0) || (message.images && message.images.length > 0)) && (
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center gap-1 p-1 pl-3 hover:bg-gray-100 rounded transition-all duration-200 border border-gray-200 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                          onClick={handleMessageSelect}
+                        >
+                          <span>
+                            {`${searchResultsCount ? `${searchResultsCount}条来源` : ""}${searchResultsCount && imagesCount ? "，" : ""}${imagesCount ? `${imagesCount}张图片` : ""}`}
+                          </span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                </div>
+
+                {/* Tool button */}
+                <div className="flex items-center space-x-2 mt-1 justify-end">
+                  <TooltipProvider>
+                    {/* Copy button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={`h-8 w-8 rounded-full bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm ${
+                            copied ? "bg-green-100 text-green-600 border-green-200" : ""
+                          }`}
+                          onClick={handleCopyContent}
+                          disabled={copied}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{copied ? "已复制" : "复制内容"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* Thumbs up button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={localOpinion === 'Y' ? "secondary" : "outline"}
+                          size="icon"
+                          className={`h-8 w-8 rounded-full ${localOpinion === 'Y' ? 'bg-green-100 text-green-600 border-green-200' : 'bg-white hover:bg-gray-100'} transition-all duration-200 shadow-sm`}
+                          onClick={handleThumbsUp}
+                        >
+                          <FaRegThumbsUp className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{localOpinion === 'Y' ? "取消点赞" : "点赞"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* Thumbs down button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={localOpinion === 'N' ? "secondary" : "outline"}
+                          size="icon"
+                          className={`h-8 w-8 rounded-full ${localOpinion === 'N' ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white hover:bg-gray-100'} transition-all duration-200 shadow-sm`}
+                          onClick={handleThumbsDown}
+                        >
+                          <FaRegThumbsDown className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{localOpinion === 'N' ? "取消点踩" : "点踩"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* Voice playback button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm"
+                        >
+                          <Volume2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>语音播报</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
-              
-              {/* tool button */}
-              <div className="flex items-center space-x-2 mt-1 justify-end">
-                <TooltipProvider>
-                  {/* copy button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={`h-8 w-8 rounded-full bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm ${
-                          copied ? "bg-green-100 text-green-600 border-green-200" : ""
-                        }`}
-                        onClick={handleCopyContent}
-                        disabled={copied}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{copied ? "已复制" : "复制内容"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* thumbs up button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={localOpinion === 'Y' ? "secondary" : "outline"}
-                        size="icon"
-                        className={`h-8 w-8 rounded-full ${localOpinion === 'Y' ? 'bg-green-100 text-green-600 border-green-200' : 'bg-white hover:bg-gray-100'} transition-all duration-200 shadow-sm`}
-                        onClick={handleThumbsUp}
-                      >
-                        <FaRegThumbsUp className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{localOpinion === 'Y' ? "取消点赞" : "点赞"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* thumbs down button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={localOpinion === 'N' ? "secondary" : "outline"}
-                        size="icon"
-                        className={`h-8 w-8 rounded-full ${localOpinion === 'N' ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white hover:bg-gray-100'} transition-all duration-200 shadow-sm`}
-                        onClick={handleThumbsDown}
-                      >
-                        <FaRegThumbsDown className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{localOpinion === 'N' ? "取消点踩" : "点踩"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* voice button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-full bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm"
-                      >
-                        <Volume2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>语音播报</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>

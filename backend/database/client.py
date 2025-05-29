@@ -229,18 +229,24 @@ db_client = PostgresClient()
 minio_client = MinioClient()
 
 @contextmanager
-def get_db_session():
-    """Provide a transactional scope around a series of operations."""
-    session = db_client.session_maker()
+def get_db_session(db_session = None):
+    """
+    param db_session: Optional session to use, if None, a new session will be created.
+    Provide a transactional scope around a series of operations.
+    """
+    session = db_client.session_maker() if db_session is None else db_session
     try:
         yield session
-        session.commit()
+        if db_session is None:
+            session.commit()
     except Exception as e:
-        session.rollback()
+        if db_session is None:
+            session.rollback()
         logger.error(f"Database operation failed: {str(e)}")
         raise e
     finally:
-        session.close()
+        if db_session is None:
+            session.close()
 
 def as_dict(obj):
     if isinstance(obj, TableBase):
@@ -248,3 +254,14 @@ def as_dict(obj):
     
     # noinspection PyProtectedMember
     return dict(obj._mapping)
+
+def filter_property(data, model_class):
+    """
+    Filter the data dictionary to only include keys that correspond to columns in the model class.
+
+    :param data: Dictionary containing the data to be filtered.
+    :param model_class: The SQLAlchemy model class to filter against.
+    :return: A new dictionary with only the keys that match the model's columns.
+    """
+    model_fields = model_class.__table__.columns.keys()
+    return {key: value for key, value in data.items() if key in model_fields}

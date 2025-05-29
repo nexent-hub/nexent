@@ -1,5 +1,5 @@
 from typing import List
-
+from pydantic import Field
 from smolagents.models import MessageRole
 from smolagents.tools import Tool
 
@@ -16,8 +16,7 @@ default_system_prompt = ("# 你是一个总结专家，你的任务是根据检�
 
 class SummaryTool(Tool):
     name = "summary_content"
-    description = """
-    This is a tool for summarizing content. It can generate a response that satisfies the user. 
+    description = """This is a tool for summarizing content. It can generate a response that satisfies the user. 
     It requires the user's question and the search result of the search tool. 
     The returned content should be directly used as the input of final_answer."
     """
@@ -30,7 +29,8 @@ class SummaryTool(Tool):
     }
     output_type = "string"
 
-    def __init__(self, model: OpenAIModel, system_prompt: str = default_system_prompt):
+    def __init__(self, model: OpenAIModel=Field(description="模型"),
+                 system_prompt: str = Field(description="系统提示", default=default_system_prompt)):
         super().__init__()
         self.model = model
         self.observer = MessageObserver()

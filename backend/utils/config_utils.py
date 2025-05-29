@@ -58,9 +58,6 @@ class ConfigManager:
 
         # Update cache
         self.config_cache = {key: value for key, value in os.environ.items()}
-        self.config_cache.update({
-            "IMAGE_FILTER": os.getenv("IMAGE_FILTER", False),
-        })
 
         print(f"Configuration reloaded at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 

@@ -11,7 +11,7 @@ router = APIRouter()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("image app")
 
 # TODO: To remove this proxy service after frontend uses image filter service as image provider
 @router.get("/image")

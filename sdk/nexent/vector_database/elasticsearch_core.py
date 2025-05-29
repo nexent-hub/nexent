@@ -57,7 +57,8 @@ class ElasticSearchCore:
         
         # Initialize embedding model
         self.embedding_model = embedding_model
-    
+
+
     @property
     def embedding_dim(self) -> int:
         """
@@ -684,7 +685,7 @@ class ElasticSearchCore:
             logging.info(stats)
         except Exception as e:
             logging.error(f"Error getting index statistics: {str(e)}")
-    
+
     def get_all_indices_stats(self, index_pattern: str = "*") -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
         Get statistics for all user indices.

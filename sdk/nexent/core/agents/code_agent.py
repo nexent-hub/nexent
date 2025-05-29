@@ -23,23 +23,6 @@ class CoreAgent(CodeAgent):
         self.observer = observer
         self.should_stop = False
 
-    def initialize_system_prompt(self) -> str:
-        system_prompt = populate_template(
-            self.prompt_templates["system_prompt"],
-            variables={
-                "tools": self.tools,
-                "managed_agents": self.managed_agents,
-                "tools_requirement": self.prompt_templates.get("tools_requirement", ""),
-                "authorized_imports": (
-                    "You can import from any package you want."
-                    if "*" in self.authorized_imports
-                    else str(self.authorized_imports)
-                ),
-                "few_shots": self.prompt_templates.get("few_shots", "")
-            },
-        )
-        return system_prompt
-
     def step(self, memory_step: ActionStep) -> Union[None, Any]:
         """
         Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
@@ -56,7 +39,7 @@ class CoreAgent(CodeAgent):
         try:
             additional_args = {"grammar": self.grammar} if self.grammar is not None else {}
             chat_message: ChatMessage = self.model(self.input_messages,
-                stop_sequences=["<end_code>", "Observation:", "<end_code"], **additional_args, )
+                stop_sequences=["<end_code>", "Observation:", "Calling tools:", "<end_code"], **additional_args, )
             memory_step.model_output_message = chat_message
             model_output = chat_message.content
             memory_step.model_output = model_output
@@ -70,7 +53,6 @@ class CoreAgent(CodeAgent):
             code_action = fix_final_answer_code(parse_code_blobs(model_output))
             # 记录解析结果
             self.observer.add_message(self.agent_name, ProcessType.PARSE, code_action)
-
 
         except Exception as e:
             error_msg = f"Error in code parsing:\n{e}\nMake sure to provide correct code blobs."

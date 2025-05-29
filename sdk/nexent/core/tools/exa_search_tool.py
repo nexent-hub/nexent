@@ -4,12 +4,13 @@ import logging
 import aiohttp
 from exa_py import Exa
 from smolagents.tools import Tool
+from pydantic import Field
 
 from ..utils import MessageObserver, ProcessType
 from ..utils.tools_common_message import SearchResultTextMessage
 
 # Get logger instance
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("exa_search tool")
 
 
 class EXASearchTool(Tool):
@@ -18,19 +19,15 @@ class EXASearchTool(Tool):
                   "A tool for retrieving publicly available information, news, general knowledge, or non-proprietary data from the internet. Use this for real-time updates, broad topics, or when the query falls outside the company's internal knowledge base." \
                   "Use for open-domain, real-time, or general knowledge queries"
 
-    inputs = {"query": {"type": "string",
-                        "description": "The search query to perform."}}
+    inputs = {"query": {"type": "string", "description": "The search query to perform."}}
     output_type = "string"
     tool_sign = "b"  # Used to distinguish different index sources in summary
 
-    def __init__(
-        self,
-        exa_api_key: str,
-        data_process_service: str,
-        observer: MessageObserver = None,
-        max_results: int = 5,
-        image_filter: bool = False,
-    ):
+    def __init__(self, exa_api_key:str=Field(description="key"),
+                 observer: MessageObserver=Field(description="键", default=None, exclude=True),
+                 max_results:int=Field(description="最大检索个数", default=5),
+                 image_filter: bool = Field(description="是否开启图片过滤", default=False)
+     ):
 
         super().__init__()
 
@@ -40,7 +37,9 @@ class EXASearchTool(Tool):
         self.image_filter = image_filter
         self.record_ops = 0  # Used to record sequence number
         self.running_prompt = "网络检索中..."
-        self.data_process_service = data_process_service
+
+        # TODO add data_process_service
+        self.data_process_service = None
 
     def forward(self, query: str) -> str:
         # Perform exa search
@@ -57,13 +56,11 @@ class EXASearchTool(Tool):
 
         # Send tool running message
         if self.observer:
-            self.observer.add_message(
-                "", ProcessType.TOOL, self.running_prompt)
+            self.observer.add_message("", ProcessType.TOOL, self.running_prompt)
             card_content = [{"icon": "search", "text": query}]
             self.observer.add_message("", ProcessType.CARD, json.dumps(
                 card_content, ensure_ascii=False))
 
-        # Organize image search results
         images_list_url = []
         search_results_json = []  # Format search results into a unified structure
         search_results_return = []  # Format for input to the large model
@@ -84,6 +81,7 @@ class EXASearchTool(Tool):
             search_results_json.append(search_result_message.to_dict())
             search_results_return.append(search_result_message.to_model_dict())
             images_list_url.extend(single_result.extras["image_links"])
+
         self.record_ops += len(search_results_return)
 
         # Deduplicate and filter image list

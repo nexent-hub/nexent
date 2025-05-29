@@ -28,14 +28,14 @@ export function ChatStreamMessage({
   onOpinionChange,
 }: StreamMessageProps) {
   const { getAppAvatarUrl } = useConfig();
-  const avatarUrl = getAppAvatarUrl(20); // 消息头像大小为 20px
+  const avatarUrl = getAppAvatarUrl(20); // Message avatar size is 20px
   
   const messageRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [localOpinion, setLocalOpinion] = useState<string | null>(message.opinion_flag ?? null);
   const [isVisible, setIsVisible] = useState(false);
   
-  // 动画效果 - 消息进入时淡入
+  // Animation effect - message enters with fade-in
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -43,19 +43,19 @@ export function ChatStreamMessage({
     return () => clearTimeout(timer);
   }, []);
 
-  // 当消息更新时滚动元素到可见区域
+  // When the message is updated, scroll the element into the visible area
   useEffect(() => {
     if (message.role === "assistant" && !message.isComplete && messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [message.content, message.isComplete, message.role]);
 
-  // 更新opinion状态
+  // Update opinion status
   useEffect(() => {
     setLocalOpinion(message.opinion_flag ?? null);
   }, [message.opinion_flag]);
 
-  // 复制内容到剪贴板
+  // Copy content to clipboard
   const handleCopyContent = () => {
     if (message.finalAnswer) {
       navigator.clipboard.writeText(message.finalAnswer)
@@ -69,7 +69,7 @@ export function ChatStreamMessage({
     }
   };
 
-  // 处理点赞
+  // Handle likes
   const handleThumbsUp = () => {
     const newOpinion = localOpinion === 'Y' ? null : 'Y';
     setLocalOpinion(newOpinion);
@@ -78,7 +78,7 @@ export function ChatStreamMessage({
     }
   };
 
-  // 处理点踩
+  // Handle dislikes
   const handleThumbsDown = () => {
     const newOpinion = localOpinion === 'N' ? null : 'N';
     setLocalOpinion(newOpinion);
@@ -87,7 +87,7 @@ export function ChatStreamMessage({
     }
   };
 
-  // 处理消息选择
+  // Handle message selection
   const handleMessageSelect = () => {
     if (message.id && onSelectMessage) {
       onSelectMessage(message.id);
@@ -101,7 +101,7 @@ export function ChatStreamMessage({
         message.role === "user" ? 'flex-row-reverse' : ''
       } ${!isVisible ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}
     >
-      {/* 头像部分 - 只为AI助手显示头像 */}
+      {/* Avatar section - only show avatar for AI assistant */}
       {message.role === "assistant" && (
         <div className="flex-shrink-0">
           <div className="h-8 w-8 rounded-full overflow-hidden bg-primary/10">
@@ -110,16 +110,16 @@ export function ChatStreamMessage({
         </div>
       )}
 
-      {/* 消息内容部分 */}
+      {/* Message content section */}
       <div className={`${
         message.role === "user" 
           ? 'flex items-end flex-col w-full' 
           : 'flex-1 max-w-[calc(100%-60px)]'
       }`}>
-        {/* 用户消息部分 */}
+        {/* User message section */}
         {message.role === "user" && (
           <>
-            {/* 附件部分 - 放在文本上方 */}
+            {/* Attachment section - placed above text */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-2 w-full flex justify-end">
                 <div className="max-w-[80%]">
@@ -132,7 +132,7 @@ export function ChatStreamMessage({
               </div>
             )}
             
-            {/* 文本内容 */}
+            {/* Text content */}
             {message.content && (
               <div className="rounded-lg border bg-blue-50 border-blue-100 user-message-container py-2 px-3 ml-auto text-sm">
                 <MarkdownRenderer content={message.content} className="user-message-content" />
@@ -141,10 +141,10 @@ export function ChatStreamMessage({
           </>
         )}
         
-        {/* 助手消息部分 */}
+        {/* Assistant message section */}
         {message.role === "assistant" && (
           <>
-            {/* 附件部分 - 放在文本上方 */}
+            {/* Attachment section - placed above text */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-2 w-full">
                 <div className="max-w-[80%]">
@@ -156,7 +156,7 @@ export function ChatStreamMessage({
               </div>
             )}
             
-            {/* 文本内容 - 流式渲染区域 */}
+            {/* Text content - streaming rendering area */}
             {message.content && (
               <div className={`rounded-lg border mr-auto bg-white border-gray-200 w-full p-3 text-sm ${
                 !message.isComplete ? 'border-l-4 border-l-blue-400 shadow-sm shadow-blue-100' : ''
@@ -165,7 +165,7 @@ export function ChatStreamMessage({
               </div>
             )}
 
-            {/* 思考中状态 */}
+            {/* Thinking status */}
             {!message.isComplete && message.thinking && message.thinking.length > 0 && (
               <div className="flex items-center mt-2 ml-2">
                 <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-500" />
@@ -175,7 +175,7 @@ export function ChatStreamMessage({
               </div>
             )}
 
-            {/* 最终回答 */}
+            {/* Final answer */}
             {message.finalAnswer && (
               <div className="mt-4 rounded-lg border border-gray-200 shadow-sm transition-all duration-500">
                 <div className="flex items-center w-full py-2 px-3 font-medium bg-gradient-to-r from-purple-50 to-transparent border-b border-gray-200">
@@ -188,9 +188,9 @@ export function ChatStreamMessage({
                     searchResults={message.searchResults}
                   />
                   
-                  {/* 按钮组 */}
+                  {/* Button group */}
                   <div className="flex items-center justify-between mt-3">
-                    {/* 溯源按钮 */}
+                    {/* Source button */}
                     {((message.searchResults && message.searchResults.length > 0) || (message.images && message.images.length > 0)) && (
                       <div className="flex items-center text-xs text-gray-500">
                         <Button
@@ -209,10 +209,10 @@ export function ChatStreamMessage({
                       </div>
                     )}
                     
-                    {/* 工具按钮 */}
+                    {/* Tool button */}
                     <div className="flex items-center space-x-2 mt-3 justify-end">
                       <TooltipProvider>
-                        {/* 复制按钮 */}
+                        {/* Copy button */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -232,7 +232,7 @@ export function ChatStreamMessage({
                           </TooltipContent>
                         </Tooltip>
 
-                        {/* 点赞按钮 */}
+                        {/* Like button */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -249,7 +249,7 @@ export function ChatStreamMessage({
                           </TooltipContent>
                         </Tooltip>
 
-                        {/* 点踩按钮 */}
+                        {/* Dislike button */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -266,7 +266,7 @@ export function ChatStreamMessage({
                           </TooltipContent>
                         </Tooltip>
 
-                        {/* 语音播报按钮 */}
+                        {/* Voice announcement button */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button

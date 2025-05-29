@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, Sequence, Numeric, JS
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 
-SCHEMA="nexent"
+SCHEMA = "nexent"
 
 class TableBase(DeclarativeBase):
     create_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Creation time")
@@ -17,9 +17,9 @@ class ConversationRecord(TableBase):
     Overall information table for Q&A conversations
     """
     __tablename__ = "conversation_record_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    conversation_id = Column(Integer, Sequence("conversation_record_t_conversation_id_seq", schema="nexent"), primary_key=True, nullable=False)
+    conversation_id = Column(Integer, Sequence("conversation_record_t_conversation_id_seq", schema=SCHEMA), primary_key=True, nullable=False)
     conversation_title = Column(String(100), doc="Conversation title")
     delete_flag = Column(String(1), default="N", doc="After the user deletes it on the frontend, the deletion flag will be set to \"Y\" for soft deletion. Optional values: Y/N")
     update_time = Column(TIMESTAMP(timezone=False), server_default=func.now(), doc="Update date, audit field")
@@ -32,10 +32,10 @@ class ConversationMessage(TableBase):
     Holds the specific response message content in the conversation
     """
     __tablename__ = "conversation_message_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    message_id = Column(Integer, Sequence("conversation_message_t_message_id_seq", schema="nexent"), primary_key=True, nullable=False)
-    conversation_id = Column(Integer, doc="Formal foreign key used to associate with the所属 conversation")
+    message_id = Column(Integer, Sequence("conversation_message_t_message_id_seq", schema=SCHEMA), primary_key=True, nullable=False)
+    conversation_id = Column(Integer, doc="Formal foreign key used to associate with the conversation")
     message_index = Column(Integer, doc="Sequence number for frontend display sorting")
     message_role = Column(String(30), doc="The role sending the message, such as system, assistant, user")
     message_content = Column(String, doc="The complete content of the message")
@@ -52,11 +52,11 @@ class ConversationMessageUnit(TableBase):
     Holds the agent's output content in each message
     """
     __tablename__ = "conversation_message_unit_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    unit_id = Column(Integer, Sequence("conversation_message_unit_t_unit_id_seq", schema="nexent"), primary_key=True, nullable=False)
-    message_id = Column(Integer, doc="Formal foreign key used to associate with the所属 message")
-    conversation_id = Column(Integer, doc="Formal foreign key used to associate with the所属 conversation")
+    unit_id = Column(Integer, Sequence("conversation_message_unit_t_unit_id_seq", schema=SCHEMA), primary_key=True, nullable=False)
+    message_id = Column(Integer, doc="Formal foreign key used to associate with the message")
+    conversation_id = Column(Integer, doc="Formal foreign key used to associate with the conversation")
     unit_index = Column(Integer, doc="Sequence number for frontend display sorting")
     unit_type = Column(String(100), doc="Type of the smallest answer unit")
     unit_content = Column(String, doc="Complete content of the smallest reply unit")
@@ -71,9 +71,9 @@ class ConversationSourceImage(TableBase):
     Holds the search image source information of conversation messages
     """
     __tablename__ = "conversation_source_image_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    image_id = Column(Integer, Sequence("conversation_source_image_t_image_id_seq", schema="nexent"), primary_key=True, nullable=False)
+    image_id = Column(Integer, Sequence("conversation_source_image_t_image_id_seq", schema=SCHEMA), primary_key=True, nullable=False)
     conversation_id = Column(Integer, doc="Formal foreign key used to associate with the conversation to which the search source belongs")
     message_id = Column(Integer, doc="Formal foreign key used to associate with the conversation message to which the search source belongs")
     unit_id = Column(Integer, doc="Formal foreign key used to associate with the smallest message unit (if any) to which the search source belongs")
@@ -91,9 +91,9 @@ class ConversationSourceSearch(TableBase):
     Holds the search text source information referenced by the response messages in the conversation
     """
     __tablename__ = "conversation_source_search_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    search_id = Column(Integer, Sequence("conversation_source_search_t_search_id_seq", schema="nexent"), primary_key=True, nullable=False)
+    search_id = Column(Integer, Sequence("conversation_source_search_t_search_id_seq", schema=SCHEMA), primary_key=True, nullable=False)
     unit_id = Column(Integer, doc="Formal foreign key used to associate with the smallest message unit (if any) to which the search source belongs")
     message_id = Column(Integer, doc="Formal foreign key used to associate with the conversation message to which the search source belongs")
     conversation_id = Column(Integer, doc="Formal foreign key used to associate with the conversation to which the search source belongs")
@@ -119,9 +119,9 @@ class ModelRecord(TableBase):
     Model list defined by the user on the configuration page
     """
     __tablename__ = "model_record_t"
-    __table_args__ = {"schema": "nexent"}
+    __table_args__ = {"schema": SCHEMA}
 
-    model_id = Column(Integer, Sequence("model_record_t_model_id_seq", schema="nexent"), primary_key=True, nullable=False, doc="Model ID, unique primary key")
+    model_id = Column(Integer, Sequence("model_record_t_model_id_seq", schema=SCHEMA), primary_key=True, nullable=False, doc="Model ID, unique primary key")
     model_repo = Column(String(100), doc="Model path address")
     model_name = Column(String(100), nullable=False, doc="Model name")
     model_factory = Column(String(100), doc="Model vendor, determining the API key and the specific format of the model response. Currently defaults to OpenAI-API-Compatible.")

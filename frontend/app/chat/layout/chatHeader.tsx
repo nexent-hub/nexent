@@ -4,12 +4,9 @@ import { Input } from "@/components/ui/input"
 import {
   Share,
   Bookmark,
-  MoreHorizontal,
-  Zap,
-  LayoutDashboard
+  MoreHorizontal
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdownMenu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface ChatHeaderProps {
   title: string
@@ -26,15 +23,15 @@ export function ChatHeader({
   const [editTitle, setEditTitle] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 当title属性变化时更新editTitle
+  // Update editTitle when the title attribute changes
   useEffect(() => {
     setEditTitle(title);
   }, [title]);
 
-  // 处理双击事件
+  // Handle double-click event
   const handleDoubleClick = () => {
     setIsEditing(true);
-    // 延迟聚焦以确保DOM已更新
+    // Delay focusing to ensure the DOM has updated
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -43,18 +40,18 @@ export function ChatHeader({
     }, 10);
   };
 
-  // 处理提交编辑
+  // Handle submit editing
   const handleSubmit = () => {
     const trimmedTitle = editTitle.trim();
     if (trimmedTitle && onRename && trimmedTitle !== title) {
       onRename(trimmedTitle);
     } else {
-      setEditTitle(title); // 如果为空或未变更，恢复原标题
+      setEditTitle(title); // If empty or unchanged, restore the original title
     }
     setIsEditing(false);
   };
 
-  // 处理按键事件
+  // Handle keydown event
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSubmit();
@@ -64,13 +61,12 @@ export function ChatHeader({
     }
   };
 
-  // 重构：风格被嵌入在组件内
   return (
     <header className="border-b border-transparent bg-background z-10">
       <div className="p-3 pb-1">
         <div className="relative flex flex-1">
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
-            {/* 左侧按钮区域 */}
+            {/* Left button area */}
           </div>
 
           <div className="w-full flex justify-center">

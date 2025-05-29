@@ -12,7 +12,6 @@ MODEL_ENGINE_APIKEY = os.getenv('MODEL_ENGINE_APIKEY')
 # Elasticsearch Configuration
 ES_HOST = os.getenv("ELASTICSEARCH_HOST")
 ES_API_KEY = os.getenv("ELASTICSEARCH_API_KEY")
-CREATE_TEST_KB = os.getenv("CREATE_TEST_KB", "false").lower() == "true"
 
 # Data Processing Service Configuration
 DATA_PROCESS_SERVICE = os.getenv("DATA_PROCESS_SERVICE")

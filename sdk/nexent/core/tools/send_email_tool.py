@@ -4,7 +4,7 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
-
+from pydantic import Field
 from smolagents.tools import Tool
 
 
@@ -22,8 +22,13 @@ class SendEmailTool(Tool):
                 "nullable": True}}
     output_type = "string"
 
-    def __init__(self, smtp_server: str, smtp_port: int, username: str, password: str, use_ssl: bool = True,
-            sender_name: Optional[str] = None, timeout: int = 30):
+    def __init__(self, smtp_server: str=Field(description="SMTP服务器地址"),
+                 smtp_port: int=Field(description="SMTP服务器端口"), 
+                 username: str=Field(description="SMTP服务器用户名"), 
+                 password: str=Field(description="SMTP服务器密码"), 
+                 use_ssl: bool=Field(description="是否使用SSL", default=True),
+                 sender_name: Optional[str] = Field(description="发件人名称", default=None),
+                 timeout: int = Field(description="超时时间", default=30)):
         super().__init__()
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
