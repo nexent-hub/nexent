@@ -46,7 +46,8 @@ dependencies = [
     "jieba>=0.42.1",
     "boto3>=1.37.34",
     "botocore>=1.37.34",
-    "python-multipart>=0.0.20"
+    "python-multipart>=0.0.20",
+    "mcp==1.6.0"
 ]
 
 [project.optional-dependencies]

@@ -40,17 +40,7 @@ export default function CreatePage() {
     }
   }, [])
 
-  // 添加自动检查间隔
-  useEffect(() => {
-    const interval = setInterval(() => {
-      checkModelEngineConnection()
-    }, 30000) // 每30秒检查一次
-
-    // 清理函数
-    return () => clearInterval(interval)
-  }, [])
-
-  // 监听selectedKey变化，在进入第二页时刷新知识库数据
+  // 监听selectedKey变化，在切换页面时进行相应操作
   useEffect(() => {
     if (selectedKey === "2") {
       // 进入第二页时，重置标志
@@ -59,6 +49,11 @@ export default function CreatePage() {
       window.dispatchEvent(new CustomEvent('knowledgeBaseDataUpdated', {
         detail: { forceRefresh: true }
       }))
+      // 进入第二页时检查连接状态
+      checkModelEngineConnection()
+    } else if (selectedKey === "1") {
+      // 进入第一页时检查连接状态
+      checkModelEngineConnection()
     }
   }, [selectedKey])
 
