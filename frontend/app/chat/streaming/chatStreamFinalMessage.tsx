@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { MarkdownRenderer } from '@/components/ui/markdownRenderer'
 import { ChatMessageType } from '@/types/chat'
-import { Copy, Volume2, ChevronRight } from "lucide-react"
+import { Copy, Volume2, ChevronRight, Square, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa"
@@ -21,6 +21,9 @@ interface FinalMessageProps {
   index?: number
   currentConversationId?: number
 }
+
+// TTS playback status
+type TTSStatus = 'idle' | 'generating' | 'playing' | 'error';
 
 export function ChatStreamFinalMessage({
   message,
@@ -42,6 +45,10 @@ export function ChatStreamFinalMessage({
   const [localOpinion, setLocalOpinion] = useState<string | null>(message.opinion_flag ?? null);
   const [isVisible, setIsVisible] = useState(false);
   
+  // TTS related states
+  const [ttsStatus, setTtsStatus] = useState<TTSStatus>('idle');
+  const ttsServiceRef = useRef<ReturnType<typeof conversationService.tts.createTTSService> | null>(null);
+
   // Animation effect - message enters and fades in
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,6 +61,20 @@ export function ChatStreamFinalMessage({
   useEffect(() => {
     setLocalOpinion(message.opinion_flag ?? null);
   }, [message.opinion_flag]);
+
+  // Initialize TTS service
+  useEffect(() => {
+    if (!ttsServiceRef.current) {
+      ttsServiceRef.current = conversationService.tts.createTTSService();
+    }
+    
+    return () => {
+      if (ttsServiceRef.current) {
+        ttsServiceRef.current.cleanup();
+        ttsServiceRef.current = null;
+      }
+    };
+  }, []);
 
   // Copy content to clipboard
   const handleCopyContent = () => {
@@ -106,6 +127,58 @@ export function ChatStreamFinalMessage({
       onSelectMessage(message.id);
     }
   };
+
+  // TTS functionality - using service layer
+  const handleTTSPlay = async () => {
+    if (!message.finalAnswer || !ttsServiceRef.current) return;
+
+    if (ttsStatus === 'playing') {
+      ttsServiceRef.current.stopAudio();
+      setTtsStatus('idle');
+      return;
+    }
+
+    try {
+      await ttsServiceRef.current.playAudio(message.finalAnswer, (status) => {
+        setTtsStatus(status);
+      });
+    } catch (error) {
+      setTtsStatus('error');
+      setTimeout(() => setTtsStatus('idle'), 2000);
+    }
+  };
+
+  // Get TTS button icon and status
+  const getTTSButtonContent = () => {
+    switch (ttsStatus) {
+      case 'generating':
+        return {
+          icon: <Loader2 className="h-4 w-4 animate-spin" />,
+          tooltip: '正在生成语音...',
+          className: 'bg-blue-100 text-blue-600 border-blue-200'
+        };
+      case 'playing':
+        return {
+          icon: <Square className="h-4 w-4" />,
+          tooltip: '停止播放',
+          className: 'bg-red-100 text-red-600 border-red-200'
+        };
+      case 'error':
+        return {
+          icon: <Volume2 className="h-4 w-4" />,
+          tooltip: '语音生成失败',
+          className: 'bg-red-100 text-red-600 border-red-200'
+        };
+      default:
+        return {
+          icon: <Volume2 className="h-4 w-4" />,
+          tooltip: '语音播报',
+          className: 'bg-white hover:bg-gray-100'
+        };
+    }
+  };
+
+  const ttsButtonContent = getTTSButtonContent();
 
   return (
     <div 
@@ -243,13 +316,15 @@ export function ChatStreamFinalMessage({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8 rounded-full bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm"
+                          className={`h-8 w-8 rounded-full ${ttsButtonContent.className} transition-all duration-200 shadow-sm`}
+                          onClick={handleTTSPlay}
+                          disabled={ttsStatus === 'generating' || !message.finalAnswer}
                         >
-                          <Volume2 className="h-4 w-4" />
+                          {ttsButtonContent.icon}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>语音播报</p>
+                        <p>{ttsButtonContent.tooltip}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

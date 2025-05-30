@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+import asyncio
 
 from nexent.core.models.stt_model import STTModel, STTConfig
 from nexent.core.models.tts_model import TTSModel, TTSConfig
@@ -61,43 +62,56 @@ class VoiceService:
             print("TTS WebSocket connection attempt...")
             await websocket.accept()
             print("TTS WebSocket connection accepted")
+            
             try:
-                while True:
-                    # Receive text from client
-                    data = await websocket.receive_json()
-                    text = data.get("text")
-                    if not text:
+                # Receive text from client (single request)
+                data = await websocket.receive_json()
+                text = data.get("text")
+                
+                if not text:
+                    if websocket.client_state.name == "CONNECTED":
                         await websocket.send_json({"error": "No text provided"})
-                        continue
+                    return
 
-                    # Generate and stream audio chunks
-                    try:
-                        # First try to use it as a coroutine that returns an async iterator
-                        speech_result = await self.tts_model.generate_speech(text, stream=True)
+                # Generate and stream audio chunks
+                try:
+                    # First try to use it as a coroutine that returns an async iterator
+                    speech_result = await self.tts_model.generate_speech(text, stream=True)
 
-                        # Check if it's an async iterator or a regular iterable
-                        if hasattr(speech_result, '__aiter__'):
-                            # It's an async iterator, use async for
-                            async for chunk in speech_result:
+                    # Check if it's an async iterator or a regular iterable
+                    if hasattr(speech_result, '__aiter__'):
+                        # It's an async iterator, use async for
+                        async for chunk in speech_result:
+                            if websocket.client_state.name == "CONNECTED":
                                 await websocket.send_bytes(chunk)
-                        elif hasattr(speech_result, '__iter__'):
-                            # It's a regular iterator, use normal for
-                            for chunk in speech_result:
+                            else:
+                                break
+                    elif hasattr(speech_result, '__iter__'):
+                        # It's a regular iterator, use normal for
+                        for chunk in speech_result:
+                            if websocket.client_state.name == "CONNECTED":
                                 await websocket.send_bytes(chunk)
-                        else:
-                            # It's a single chunk, send it directly
+                            else:
+                                break
+                    else:
+                        # It's a single chunk, send it directly
+                        if websocket.client_state.name == "CONNECTED":
                             await websocket.send_bytes(speech_result)
 
-                    except TypeError as te:
-                        # If speech_result is still a coroutine, try calling it directly without stream=True
-                        if "async for" in str(te) and "requires an object with __aiter__" in str(te):
-                            print("Falling back to non-streaming TTS")
-                            speech_data = await self.tts_model.generate_speech(text, stream=False)
-                            await websocket.send_bytes(speech_data)
-                        else:
-                            raise
+                    await asyncio.sleep(0.1)
 
-                    # Send end marker after successful TTS generation
+                except TypeError as te:
+                    # If speech_result is still a coroutine, try calling it directly without stream=True
+                    if "async for" in str(te) and "requires an object with __aiter__" in str(te):
+                        print("Falling back to non-streaming TTS")
+                        speech_data = await self.tts_model.generate_speech(text, stream=False)
+                        if websocket.client_state.name == "CONNECTED":
+                            await websocket.send_bytes(speech_data)
+                    else:
+                        raise
+
+                # Send end marker after successful TTS generation
+                if websocket.client_state.name == "CONNECTED":
                     await websocket.send_json({"status": "completed"})
 
             except Exception as e:
@@ -107,6 +121,9 @@ class VoiceService:
                 await websocket.send_json({"error": str(e)})
             finally:
                 print("TTS WebSocket connection closed")
+                # Ensure connection is properly closed
+                if websocket.client_state.name == "CONNECTED":
+                    await websocket.close()
 
     async def check_connectivity(self, model_type: str) -> bool:
         """
