@@ -71,6 +71,7 @@ export interface ToolPoolProps {
   tools?: Tool[];
   loadingTools?: boolean;
   mainAgentId?: string | null;
+  localIsGenerating?: boolean;
 }
 // main component props interface
 export interface BusinessLogicConfigProps {
@@ -80,7 +81,6 @@ export interface BusinessLogicConfigProps {
   setSelectedAgents: (agents: Agent[]) => void;
   selectedTools: Tool[];
   setSelectedTools: (tools: Tool[] | ((prevTools: Tool[]) => Tool[])) => void;
-  onGenerateSystemPrompt: () => void;
   systemPrompt: string;
   setSystemPrompt: (value: string) => void;
   isCreatingNewAgent: boolean;
@@ -100,4 +100,5 @@ export interface BusinessLogicConfigProps {
   setSubAgentList: (agents: Agent[]) => void;
   enabledAgentIds: number[];
   setEnabledAgentIds: (ids: number[]) => void;
+  localIsGenerating: boolean;
 }

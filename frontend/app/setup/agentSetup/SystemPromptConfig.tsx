@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { message, Typography } from 'antd'
 import SystemPromptDisplay from './components/SystemPromptDisplay'
 import { Agent, Tool } from './ConstInterface'
@@ -18,6 +18,7 @@ interface SystemPromptConfigProps {
   taskDescription?: string;
   selectedAgents?: Agent[];
   selectedTools?: Tool[];
+  onLocalIsGeneratingChange?: (value: boolean) => void;
 }
 
 /**
@@ -28,12 +29,20 @@ export default function SystemPromptConfig({
   setSystemPrompt,
   isGenerating,
   onDebug,
-  onGenerate,
   agentId,
   taskDescription,
   selectedAgents = [],
-  selectedTools = []
+  selectedTools = [],
+  onLocalIsGeneratingChange
 }: SystemPromptConfigProps) {
+  const [localIsGenerating, setLocalIsGenerating] = useState(false);
+
+  useEffect(() => {
+    if (onLocalIsGeneratingChange) {
+      onLocalIsGeneratingChange(localIsGenerating);
+    }
+  }, [localIsGenerating, onLocalIsGeneratingChange]);
+
   return (
     <div className="flex flex-col h-full gap-4 pl-4">
       <div className="flex-grow overflow-hidden">
@@ -43,11 +52,11 @@ export default function SystemPromptConfig({
             isGenerating={isGenerating} 
             onPromptChange={setSystemPrompt}
             onDebug={onDebug}
-            onGenerate={onGenerate || (() => {})}
             agentId={agentId}
             taskDescription={taskDescription}
             selectedAgents={selectedAgents}
             selectedTools={selectedTools}
+            onLocalIsGeneratingChange={setLocalIsGenerating}
           />
         </div>
       </div>

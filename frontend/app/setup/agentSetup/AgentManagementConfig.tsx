@@ -189,7 +189,8 @@ function ToolPool({
   isCreatingNewAgent, 
   tools = [], 
   loadingTools = false,
-  mainAgentId
+  mainAgentId,
+  localIsGenerating
 }: ToolPoolProps) {
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
   const [currentTool, setCurrentTool] = useState<Tool | null>(null);
@@ -277,10 +278,13 @@ function ToolPool({
     
     return (
       <div 
-        className={`border rounded-md p-3 flex flex-col justify-center cursor-pointer transition-colors duration-200 h-[80px] ${
+        className={`border rounded-md p-3 flex flex-col justify-center transition-colors duration-200 h-[80px] ${
           isSelected ? 'bg-blue-100 border-blue-400' : 'hover:border-blue-300'
-        }`}
-        onClick={(e) => handleToolSelect(tool, !isSelected, e)}
+        } ${localIsGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={(e) => {
+          if (localIsGenerating) return;
+          handleToolSelect(tool, !isSelected, e);
+        }}
       >
         <div className="flex items-center h-full">
           <div className="flex-1 overflow-hidden">
@@ -294,8 +298,14 @@ function ToolPool({
           </div>
           <button 
             type="button"
-            onClick={(e) => handleConfigClick(tool, e)}
-            className="ml-2 flex-shrink-0 flex items-center justify-center text-gray-500 hover:text-blue-500 bg-transparent"
+            onClick={(e) => {
+              if (localIsGenerating) return;
+              handleConfigClick(tool, e);
+            }}
+            disabled={localIsGenerating}
+            className={`ml-2 flex-shrink-0 flex items-center justify-center bg-transparent ${
+              localIsGenerating ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-500'
+            }`}
             style={{ border: "none", padding: "4px" }}
           >
             <SettingOutlined style={{ fontSize: '16px' }} />
@@ -350,7 +360,6 @@ export default function BusinessLogicConfig({
   setSelectedAgents,
   selectedTools,
   setSelectedTools,
-  onGenerateSystemPrompt,
   systemPrompt,
   setSystemPrompt,
   isCreatingNewAgent,
@@ -369,7 +378,8 @@ export default function BusinessLogicConfig({
   setMainAgentId,
   setSubAgentList,
   enabledAgentIds,
-  setEnabledAgentIds
+  setEnabledAgentIds,
+  localIsGenerating
 }: BusinessLogicConfigProps) {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
@@ -730,6 +740,7 @@ export default function BusinessLogicConfig({
             tools={tools}
             loadingTools={isLoadingTools}
             mainAgentId={mainAgentId}
+            localIsGenerating={localIsGenerating}
           />
         </div>
       </div>
