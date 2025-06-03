@@ -1,4 +1,5 @@
 import os
+import re
 import time
 from collections import deque
 from typing import Union, Any, Optional, List, Dict, Generator
@@ -47,7 +48,9 @@ class CoreAgent(CodeAgent):
             raise AgentGenerationError(f"Error in generating model output:\n{e}", self.logger) from e
 
         self.logger.log_markdown(content=model_output, title="Output message of the LLM:", level=LogLevel.DEBUG, )
-
+        code_block_pattern = r"```(?:py|python)?\n(.*?)\n```"
+        if not re.search(code_block_pattern, model_output, re.DOTALL):
+            return model_output
         # Parse
         try:
             code_action = fix_final_answer_code(parse_code_blobs(model_output))
