@@ -150,7 +150,7 @@ export const ModelListCard = ({
     const officialModel = modelsData.official.find((m) => m.type === type && m.name === modelName)
     if (officialModel) return "ModelEngine"
 
-    const customModel = modelsData.custom.find((m) => m.type === type && m.displayName === modelName)
+    const customModel = modelsData.custom.find((m) => m.type === type && (m.name === modelName || m.displayName === modelName))
     return customModel ? "自定义" : "未知来源"
   }
 
@@ -306,7 +306,7 @@ export const ModelListCard = ({
         {modelsBySource.custom.length > 0 && (
           <Select.OptGroup label="自定义模型">
             {modelsBySource.custom.map((model) => (
-              <Option key={`${type}-${model.displayName || model.name}-custom`} value={model.displayName || model.name}>
+              <Option key={`${type}-${model.displayName || model.name}-custom`} value={model.name || model.displayName }>
                 <div className="flex items-center justify-between">
                   <div className="font-medium truncate" title={model.displayName || model.name}>
                     {model.displayName || model.name}
