@@ -3,7 +3,7 @@
 import { Input, Modal, Spin, message } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import AdditionalRequestInput from './AdditionalRequestInput'
-import { generatePrompt, fineTunePrompt, savePrompt } from '@/services/promptService'
+import { generatePromptStream, fineTunePrompt, savePrompt } from '@/services/promptService'
 
 // Milkdown imports
 import { MilkdownProvider, Milkdown, useEditor } from '@milkdown/react'
@@ -89,22 +89,33 @@ export default function SystemPromptDisplay({
       message.warning("无法生成提示词：未指定Agent ID");
       return;
     }
-    
+
+    setLocalIsGenerating(true);
+    onLocalIsGeneratingChange?.(true);
+    // Clear previous tuned prompt
+    setLocalPrompt('');
+
     try {
-      setLocalIsGenerating(true);
-      console.log("onLocalIsGeneratingChange value:", onLocalIsGeneratingChange);
-      onLocalIsGeneratingChange?.(true);
-      console.log("开始调用API生成提示词", { agent_id: agentId, task_description: taskDescription });
-      
-      const result = await generatePrompt({
-        agent_id: agentId,
-        task_description: taskDescription
-      });
-      
-      console.log("API返回结果", result);
-      
-      onPromptChange(result);
-      message.success("提示词生成成功");
+      await generatePromptStream(
+        {
+          agent_id: agentId,
+          task_description: taskDescription
+        },
+        (streamedText) => {
+          setLocalPrompt(streamedText);
+          onPromptChange(streamedText);
+        },
+        (err) => {
+          message.error(`生成提示词失败: ${err instanceof Error ? err.message : '未知错误'}`);
+          setLocalIsGenerating(false);
+          onLocalIsGeneratingChange?.(false);
+        },
+        () => {
+          setLocalIsGenerating(false);
+          onLocalIsGeneratingChange?.(false);
+          message.success("提示词生成成功");
+        }
+      );
     } catch (error) {
       console.error("生成提示词失败:", error);
       message.error(`生成提示词失败: ${error instanceof Error ? error.message : '未知错误'}`);
