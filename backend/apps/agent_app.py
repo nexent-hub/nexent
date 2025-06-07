@@ -23,13 +23,14 @@ logger = logging.getLogger("agent app")
 
 # Define API route
 @router.post("/run")
-async def agent_run_api(http_req: Request, request: AgentRequest, authorization: str = Header(None)):
+async def agent_run_api(request: AgentRequest, authorization: str = Header(None)):
     """
     Agent execution API endpoint
     """
     agent_run_info = await create_agent_run_info(agent_id=request.agent_id,
                                                  minio_files=request.minio_files,
-                                                 query=request.query)
+                                                 query=request.query,
+                                                 history=request.history)
     
     # Save user message only if not in debug mode and register agent run info
     if not request.is_debug:

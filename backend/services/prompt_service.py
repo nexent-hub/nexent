@@ -9,7 +9,7 @@ from jinja2 import StrictUndefined, Template
 
 from consts.model import AgentInfoRequest
 from services.agent_service import get_enable_tool_id_by_agent_id
-from database.agent_db import query_sub_agents, save_agent_prompt, update_agent, \
+from database.agent_db import query_sub_agents, update_agent, \
     query_tools_by_ids
 from utils.user_utils import get_user_info
 from utils.config_utils import config_manager
@@ -139,7 +139,6 @@ def join_info_for_generate_system_prompt(prompt_for_generate, sub_agent_info_lis
         "APP_DESCRIPTION": app_description
     })
     return content
-
 
 def get_enabled_tool_description_for_generate_prompt(agent_id: int, tenant_id: str, user_id: str = None):
     # Get tool information

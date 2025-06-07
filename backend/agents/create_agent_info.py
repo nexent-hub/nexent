@@ -8,6 +8,7 @@ from nexent.core.agents.agent_model import AgentRunInfo, ModelConfig, AgentConfi
 
 from database.agent_db import search_agent_info_by_agent_id, search_tools_for_sub_agent, query_sub_agents
 from services.agent_service import query_or_create_main_agents_api
+from services.elasticsearch_service import ElasticSearchService
 from utils.config_utils import config_manager
 from utils.user_utils import get_user_info
 
@@ -40,11 +41,23 @@ async def create_agent_config(agent_id, tenant_id, user_id):
             user_id=user_id)
         managed_agents.append(sub_agent_config)
 
+    tool_list = await create_tool_config_list(agent_id, tenant_id, user_id)
+    system_prompt = agent_info.get("prompt")
+
+    # special logic
+    for tool in tool_list:
+        if "KnowledgeBaseSearchTool" == tool.class_name:
+            knowledge_base_summary = "\n\n### 本地知识库信息 ###\n"
+            for knowledge_name in json.loads(config_manager.get_config("SELECTED_KB_NAMES", "[]")):
+                message = ElasticSearchService().get_summary(index_name=knowledge_name)
+                knowledge_base_summary += f"{knowledge_name}:{message['summary']}\n"
+            system_prompt += knowledge_base_summary
+
     agent_config = AgentConfig(
-        name=agent_info["name"],
-        description=agent_info.get("description", ""),
-        prompt_templates=await prepare_prompt_templates(is_manager=len(managed_agents)>0, system_prompt=agent_info.get("prompt")),
-        tools=await create_tool_config_list(agent_id, tenant_id, user_id),
+        name="" if agent_info["name"] is None else agent_info["name"],
+        description="" if agent_info["description"] is None else agent_info["description"],
+        prompt_templates=await prepare_prompt_templates(is_manager=len(managed_agents)>0, system_prompt=system_prompt),
+        tools=tool_list,
         max_steps=agent_info.get("max_steps", 10),
         model_name=agent_info.get("model_name"),
         provide_run_summary=agent_info.get("provide_run_summary", False),
@@ -100,7 +113,7 @@ async def join_minio_file_description_to_query(minio_files, query):
     return final_query
 
 
-async def create_agent_run_info(agent_id, minio_files, query):
+async def create_agent_run_info(agent_id, minio_files, query, history):
     user_id, tenant_id = get_user_info()
     if not agent_id:
         agent_id = query_or_create_main_agents_api(tenant_id=tenant_id, user_id=user_id)
@@ -113,7 +126,7 @@ async def create_agent_run_info(agent_id, minio_files, query):
         observer=MessageObserver(),
         agent_config=await create_agent_config(agent_id=agent_id, tenant_id=tenant_id, user_id=user_id),
         mcp_host=config_manager.get_config("MCP_SERVICE"),
-        history=None,
+        history=history,
         stop_event=threading.Event()
     )
     return agent_run_info

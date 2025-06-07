@@ -45,7 +45,11 @@ export default function CreatePage() {
         detail: { forceRefresh: true }
       }))
     }
-    checkModelEngineConnection()
+    
+    // 从页面2跳转到页面3时，不需要检验ModelEngine连通性
+    if (selectedKey !== "3") {
+      checkModelEngineConnection()
+    }
   }, [selectedKey])
 
   // Function to check the ModelEngine connection status
@@ -134,8 +138,55 @@ export default function CreatePage() {
         setIsSavingConfig(false)
       }
     } else if (selectedKey === "2") {
-      // Jump from the second page to the third page
-      setSelectedKey("3")
+      // 从页面2跳转到页面3时，保存知识库的选中信息
+      try {
+        // 获取当前配置
+        const currentConfig = configStore.getConfig()
+        
+        // 通过自定义事件获取当前知识库的选中状态
+        const knowledgeBaseData = await new Promise<{
+          selectedKbNames: string[];
+          selectedKbModels: string[];
+          selectedKbSources: string[];
+        }>((resolve) => {
+          const handleKnowledgeBaseResponse = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            resolve(customEvent.detail);
+            window.removeEventListener('knowledgeBaseDataResponse', handleKnowledgeBaseResponse);
+          };
+          
+          window.addEventListener('knowledgeBaseDataResponse', handleKnowledgeBaseResponse);
+          window.dispatchEvent(new CustomEvent('getKnowledgeBaseData'));
+          
+          // 设置超时以防止无限等待
+          setTimeout(() => {
+            window.removeEventListener('knowledgeBaseDataResponse', handleKnowledgeBaseResponse);
+            // 如果获取失败，从configStore获取当前配置
+            const dataConfig = configStore.getDataConfig();
+            resolve({
+              selectedKbNames: dataConfig.selectedKbNames || [],
+              selectedKbModels: dataConfig.selectedKbModels || [],
+              selectedKbSources: dataConfig.selectedKbSources || []
+            });
+          }, 1000);
+        });
+
+        // 更新配置中的知识库选中信息
+        configStore.updateDataConfig({
+          selectedKbNames: knowledgeBaseData.selectedKbNames,
+          selectedKbModels: knowledgeBaseData.selectedKbModels,
+          selectedKbSources: knowledgeBaseData.selectedKbSources
+        });
+
+        // 保存配置到后端
+        await configService.saveConfigToBackend(currentConfig);
+        
+        // 跳转到页面3
+        setSelectedKey("3");
+      } catch (error) {
+        console.error("保存知识库配置异常:", error);
+        message.error("保存知识库配置失败，请重试");
+      }
     } else if (selectedKey === "1") {
       // Validate required fields when jumping from the first page to the second page
       try {

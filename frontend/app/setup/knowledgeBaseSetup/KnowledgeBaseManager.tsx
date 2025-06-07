@@ -115,12 +115,39 @@ function DataConfig() {
       }
     };
     
+    // 添加监听获取知识库数据的事件
+    const handleGetKnowledgeBaseData = () => {
+      // 获取当前选中的知识库信息
+      const selectedKbNames = kbState.knowledgeBases
+        .filter(kb => kbState.selectedIds.includes(kb.id))
+        .map(kb => kb.name);
+      
+      const selectedKbModels = kbState.knowledgeBases
+        .filter(kb => kbState.selectedIds.includes(kb.id))
+        .map(kb => kb.embeddingModel);
+      
+      const selectedKbSources = kbState.knowledgeBases
+        .filter(kb => kbState.selectedIds.includes(kb.id))
+        .map(kb => kb.source);
+      
+      // 发送响应事件
+      window.dispatchEvent(new CustomEvent('knowledgeBaseDataResponse', {
+        detail: {
+          selectedKbNames,
+          selectedKbModels,
+          selectedKbSources
+        }
+      }));
+    };
+    
     window.addEventListener('selectNewKnowledgeBase', handleSelectNewKnowledgeBase as EventListener);
+    window.addEventListener('getKnowledgeBaseData', handleGetKnowledgeBaseData);
     
     return () => {
       window.removeEventListener('selectNewKnowledgeBase', handleSelectNewKnowledgeBase as EventListener);
+      window.removeEventListener('getKnowledgeBaseData', handleGetKnowledgeBaseData);
     };
-  }, [kbState.knowledgeBases, setActiveKnowledgeBase, fetchDocuments, setIsCreatingMode, setHasClickedUpload]);
+  }, [kbState.knowledgeBases, kbState.selectedIds, setActiveKnowledgeBase, fetchDocuments, setIsCreatingMode, setHasClickedUpload]);
 
   // Generate unique knowledge base name
   const generateUniqueKbName = (existingKbs: KnowledgeBase[]): string => {
