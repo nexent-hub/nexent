@@ -291,7 +291,6 @@ function ToolPool({
 
   // Use useMemo to cache the tool list to avoid unnecessary recalculations
   const displayTools = useMemo(() => {
-    console.log('tools', tools);
     return tools || [];
   }, [tools]);
 
