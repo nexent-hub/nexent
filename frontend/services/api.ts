@@ -26,10 +26,15 @@ export const API_ENDPOINTS = {
     list: `${API_BASE_URL}/tool/list`,
     update: `${API_BASE_URL}/tool/update`,
     search: `${API_BASE_URL}/tool/search`,
+    rescan: `${API_BASE_URL}/tool/rescan`,
   },
   prompt: {
     generate: `${API_BASE_URL}/prompt/generate`,
     fineTune: `${API_BASE_URL}/prompt/fine_tune`,
+  },
+  mcp: {
+    verify: `${API_BASE_URL}/mcp/verify`,
+    list: `${API_BASE_URL}/mcp/list`,
   },
   stt: {
     ws: `/api/voice/stt/ws`,

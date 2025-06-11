@@ -42,3 +42,15 @@ async def update_tool_info_api(request: ToolInstanceInfoRequest):
     except Exception as e:
         logging.error(f"Failed to update tool, error in: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to update tool, error in: {str(e)}")
+
+
+@router.post("/rescan")
+async def rescan_tools_api():
+    """
+    Rescan all available tools and update the tool table.
+    """
+    try:
+        return tool_configuration_service.rescan_tools()
+    except Exception as e:
+        logging.error(f"Failed to rescan tools, error in: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to rescan tools, error in: {str(e)}")

@@ -159,6 +159,23 @@ class ToolConfigurationService:
         update_tool_table_from_scan_tool_list(tool_list)
 
     @staticmethod
+    def rescan_tools():
+        """
+        Rescan all available tools and update the tool table.
+        This method can be used to refresh the tool list when new tools are added.
+
+        Returns:
+            List[ToolInfo]: List of updated tool information
+        """
+        try:
+            tool_list = scan_tools()
+            update_tool_table_from_scan_tool_list(tool_list)
+            return tool_list
+        except Exception as e:
+            logger.error(f"rescan_tools error: {str(e)}")
+            raise ValueError(f"Failed to rescan tools: {str(e)}")
+
+    @staticmethod
     def search_tool_info_impl(agent_id: int, tool_id: int):
         user_id, tenant_id = get_user_info()
         try:
