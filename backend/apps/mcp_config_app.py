@@ -58,7 +58,7 @@ async def verify_mcp_url(request: McpUrlVerifyRequest):
         return {"success": False, "message": "无法连接到MCP服务"}
     except Exception as e:
         logging.error(f"Failed to verify MCP URL: {str(e)}")
-        return {"success": False, "message": f"验证MCP URL失败: {str(e)}"}
+        return {"success": False, "message": "验证MCP URL失败，请联系管理员。"}
 
 @router.get("/list")
 async def list_mcp_service():
@@ -73,4 +73,4 @@ async def list_mcp_service():
         return {"success": True, "mcp_list": mcp_list}
     except Exception as e:
         logging.error(f"Failed to get MCP service URL: {str(e)}")
-        return {"success": False, "message": f"获取MCP服务地址失败: {str(e)}"}
+        return {"success": False, "message": "获取MCP服务地址失败，请联系管理员。"}
