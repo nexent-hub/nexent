@@ -6,7 +6,7 @@ import SystemPromptDisplay from './components/SystemPromptDisplay'
 import DebugConfig from './DebugConfig'
 import GuideSteps from './components/GuideSteps'
 import { Row, Col, Drawer, message } from 'antd'
-import { fetchTools, fetchAgentList } from '@/services/agentConfigService'
+import { fetchTools, fetchAgentList, fetchMcpList } from '@/services/agentConfigService'
 import { OpenAIModel } from '@/app/setup/agentSetup/ConstInterface'
 
 // Layout Height Constant Configuration
@@ -42,6 +42,7 @@ export default function AgentConfig() {
   const [enabledToolIds, setEnabledToolIds] = useState<number[]>([])
   const [enabledAgentIds, setEnabledAgentIds] = useState<number[]>([])
   const [localIsGenerating, setLocalIsGenerating] = useState(false)
+  const [mcpList, setMcpList] = useState<any[]>([])
 
   // load tools when page is loaded
   useEffect(() => {
@@ -63,6 +64,19 @@ export default function AgentConfig() {
     }
     
     loadTools()
+  }, [])
+
+  // get mcp list
+  useEffect(() => {
+    const loadMcpList = async () => {
+      const result = await fetchMcpList();
+      if (result.success) {
+        setMcpList(result.data);
+      } else {
+        message.error(result.message);
+      }
+    }
+    loadMcpList();
   }, [])
 
   // get agent list
@@ -228,6 +242,8 @@ export default function AgentConfig() {
                   enabledAgentIds={enabledAgentIds}
                   setEnabledAgentIds={setEnabledAgentIds}
                   localIsGenerating={localIsGenerating}
+                  mcpList={mcpList}
+                  setTools={setTools}
                 />
               </div>
             </div>

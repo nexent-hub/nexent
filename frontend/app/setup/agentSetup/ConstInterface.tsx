@@ -72,6 +72,9 @@ export interface ToolPoolProps {
   loadingTools?: boolean;
   mainAgentId?: string | null;
   localIsGenerating?: boolean;
+  mcpList?: any[];
+  setSelectedTools: (tools: Tool[]) => void;
+  setTools?: (tools: Tool[]) => void;
 }
 // main component props interface
 export interface BusinessLogicConfigProps {
@@ -101,4 +104,6 @@ export interface BusinessLogicConfigProps {
   enabledAgentIds: number[];
   setEnabledAgentIds: (ids: number[]) => void;
   localIsGenerating: boolean;
+  mcpList?: any[];
+  setTools: (tools: Tool[]) => void;
 }

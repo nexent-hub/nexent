@@ -46,6 +46,89 @@ export const fetchTools = async () => {
 };
 
 /**
+ * get mcp list from backend
+ * @returns mcp list
+ */
+export const fetchMcpList = async () => {
+  try {
+    const response = await fetch(API_ENDPOINTS.mcp.list);
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.success) {
+      return {
+        success: true,
+        data: data.mcp_list,
+        message: ''
+      };
+    } else {
+      return {
+        success: false,
+        data: {},
+        message: '获取 MCP 列表失败'
+      };
+    }
+  } catch (error) { 
+    console.error('获取 MCP 列表失败:', error);
+    return {
+      success: false,
+      data: {},
+      message: '获取 MCP 列表失败，请稍后重试'
+    };
+  }
+};
+
+/**
+ * get tool list from backend
+ * @returns converted tool list
+ */
+export const fetchRescanTools = async () => {
+  try {
+    const response = await fetch(API_ENDPOINTS.tool.rescan, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // convert backend Tool format to frontend Tool format
+    const formattedTools = data.map((tool: Tool) => ({
+      id: String(tool.tool_id),
+      name: tool.name,
+      description: tool.description,
+      source: tool.source,
+      initParams: tool.params.map(param => {
+        return {
+          name: param.name,
+          type: convertParamType(param.type),
+          required: !param.optional,
+          value: param.default,
+          description: param.description
+        };
+      })
+    }));
+    
+    return {
+      success: true,
+      data: formattedTools,
+      message: ''
+    };
+  } catch (error) {
+    console.error('获取工具列表出错:', error);
+    return {
+      success: false,
+      data: [],
+      message: '获取工具列表失败，请稍后重试'
+    };
+  }
+};
+
+/**
  * get agent list from backend
  * @returns object containing main_agent_id and sub_agent_list
  */

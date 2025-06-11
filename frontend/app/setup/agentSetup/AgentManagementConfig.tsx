@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
-import { Typography, Input, Button, Switch, Modal, message, Select, InputNumber } from 'antd'
+import { Typography, Input, Button, Switch, Modal, message, Select, InputNumber, Tooltip, Badge } from 'antd'
 import { SettingOutlined } from '@ant-design/icons'
+import { FiRefreshCw } from 'react-icons/fi'
 import ToolConfigModal from './components/ToolConfigModal'
 import AgentModalComponent from './components/AgentModal'
 import { AgentModalProps, Tool, BusinessLogicInputProps, SubAgentPoolProps, ToolPoolProps, BusinessLogicConfigProps, Agent, OpenAIModel } from './ConstInterface'
 import { ScrollArea } from '@/components/ui/scrollArea'
-import { getCreatingSubAgentId, fetchAgentList, updateToolConfig, searchToolConfig, updateAgent } from '@/services/agentConfigService'
+import { getCreatingSubAgentId, fetchAgentList, updateToolConfig, searchToolConfig, updateAgent, fetchRescanTools, fetchTools } from '@/services/agentConfigService'
+import { API_ENDPOINTS } from '@/services/api'
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -189,14 +191,107 @@ function ToolPool({
   tools = [], 
   loadingTools = false,
   mainAgentId,
-  localIsGenerating
+  localIsGenerating,
+  mcpList,
+  setSelectedTools,
+  setTools
 }: ToolPoolProps) {
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
   const [currentTool, setCurrentTool] = useState<Tool | null>(null);
   const [pendingToolSelection, setPendingToolSelection] = useState<{tool: Tool, isSelected: boolean} | null>(null);
+  const [isMcpModalOpen, setIsMcpModalOpen] = useState(false);
+  const [mcpAddress, setMcpAddress] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [mcpConnectionStatus, setMcpConnectionStatus] = useState<'error' | 'processing' | 'success'>('error');
+
+  // Set the first address in mcpList as the default MCP address.
+  useEffect(() => {
+    if (mcpList) {
+      setMcpAddress(mcpList[0]);
+    }
+  }, [mcpList]);
+
+  /**
+   * Verify the MCP connection by sending a test request to the specified MCP address
+   * This function handles:
+   * 1. Input validation
+   * 2. Connection status management
+   * 3. Error handling and user feedback
+   */
+  const handleVerifyMcp = async () => {
+    // Validate if MCP address is provided
+    if (!mcpAddress) {
+      message.error('请输入MCP地址');
+      return;
+    }
+    
+    // Set loading state and update connection status
+    setIsVerifying(true);
+    setMcpConnectionStatus('processing');
+    try {
+      // Send verification request to the MCP endpoint
+      const response = await fetch(API_ENDPOINTS.mcp.verify, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mcp_url: mcpAddress
+        })
+      });
+      
+      const data = await response.json();
+      // Update UI based on verification result
+      if (data.success) {
+        setMcpConnectionStatus('success');
+        message.success(data.message);
+      } else {
+        setMcpConnectionStatus('error');
+        message.error(data.message);
+      }
+    } catch (error) {
+      // Handle network or other unexpected errors
+      setMcpConnectionStatus('error');
+      message.error('验证失败，请检查网络连接');
+    } finally {
+      // Reset loading state regardless of outcome
+      setIsVerifying(false);
+    }
+  };
+
+  /**
+   * Trigger a rescan of MCP tools
+   * This function sends a request to refresh the available tool list from MCP
+   * and handles the response with appropriate user feedback
+   */
+  const handleRescanMcpTools = async () => {
+    const result = await fetchRescanTools();
+    if (result.success) {
+      // 重新加载工具列表
+      try {
+        const toolsResult = await fetchTools();
+        if (toolsResult.success) {
+          // 更新整个工具列表
+          if (setTools) {
+            setTools(toolsResult.data);
+            message.success('工具列表已更新');
+          }
+        } else {
+          message.error(toolsResult.message);
+        }
+      } catch (error) {
+        console.error('加载工具列表失败:', error);
+        message.error('获取工具列表失败，请刷新页面重试');
+      }
+    } else {
+      // 显示错误信息
+      message.error(result.message);
+    }
+  };
 
   // Use useMemo to cache the tool list to avoid unnecessary recalculations
   const displayTools = useMemo(() => {
+    console.log('tools', tools);
     return tools || [];
   }, [tools]);
 
@@ -317,9 +412,64 @@ function ToolPool({
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-medium">工具</h2>
+        <div className="flex items-center justify-between flex-1">
+          <h2 className="text-lg font-medium">工具</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsMcpModalOpen(true)}
+              className="px-4 py-1.5 rounded-md flex items-center text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+              style={{ border: "none" }}
+            >
+              配置MCP
+            </button>
+          </div>
+        </div>
         {loadingTools && <span className="text-sm text-gray-500">加载中...</span>}
       </div>
+
+      {/* MCP配置弹框 */}
+      <Modal
+        title="配置MCP"
+        open={isMcpModalOpen}
+        onCancel={() => setIsMcpModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsMcpModalOpen(false)}>
+            取消
+          </Button>,
+          <Button 
+            key="submit" 
+            type="primary" 
+            onClick={() => {
+              handleRescanMcpTools();
+              setIsMcpModalOpen(false);
+            }}
+            disabled={mcpConnectionStatus !== 'success'}
+          >
+            更新工具
+          </Button>
+        ]}
+      >
+        <div className="flex items-center gap-2 mt-4">
+          <Input
+            placeholder="请输入MCP地址"
+            value={mcpAddress}
+            onChange={(e) => setMcpAddress(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <Badge status={mcpConnectionStatus} />
+          <Tooltip title="校验">
+            <Button 
+              icon={<FiRefreshCw className={isVerifying ? "animate-spin" : ""} />}
+              size="small"
+              type="text"
+              onClick={handleVerifyMcp}
+              disabled={isVerifying}
+              className="ml-2"
+            />
+          </Tooltip>
+        </div>
+      </Modal>
+
       <ScrollArea className="flex-1 min-h-0 border-t pt-2 pb-2">
         {loadingTools ? (
           <div className="flex items-center justify-center h-full">
@@ -378,7 +528,9 @@ export default function BusinessLogicConfig({
   setSubAgentList,
   enabledAgentIds,
   setEnabledAgentIds,
-  localIsGenerating
+  localIsGenerating,
+  mcpList,
+  setTools
 }: BusinessLogicConfigProps) {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
@@ -726,6 +878,9 @@ export default function BusinessLogicConfig({
             loadingTools={isLoadingTools}
             mainAgentId={mainAgentId}
             localIsGenerating={localIsGenerating}
+            mcpList={mcpList}
+            setSelectedTools={setSelectedTools}
+            setTools={setTools}
           />
         </div>
       </div>
