@@ -3,6 +3,8 @@ import logging
 from pydantic import BaseModel
 import httpx
 from backend.utils.config_utils import config_manager
+import re
+from urllib.parse import urlparse
 
 router = APIRouter(prefix="/mcp")
 
@@ -13,10 +15,47 @@ logger = logging.getLogger("mcp config")
 class McpUrlVerifyRequest(BaseModel):
     mcp_url: str
 
+def validate_url(url):
+    """
+    Validate URL format and check for invalid characters
+    Returns: (bool, str) - (is_valid, error_message)
+    """
+    if not isinstance(url, str):
+        return False, "URL必须是字符串类型"
+    
+    # 检查URL是否为空
+    if not url.strip():
+        return False, "URL不能为空"
+        
+    try:
+        # 检查URL是否可以被正确解析
+        parsed = urlparse(url)
+        if not all([parsed.scheme, parsed.netloc]):
+            return False, "无效的URL格式"
+            
+        # 检查URL是否包含非ASCII字符
+        if not all(ord(char) < 128 for char in url):
+            return False, "URL包含非ASCII字符"
+            
+        # 检查URL是否包含合法字符
+        if not re.match(r'^[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=]+$', url):
+            return False, "URL包含非法字符"
+            
+        return True, ""
+        
+    except Exception as e:
+        return False, f"URL验证失败: {str(e)}"
+
 async def receive_first_sse_event(client, url, timeout=5):
     """
     Receive the first SSE event and consider the connection successful if received within timeout
     """
+    # 首先验证URL
+    is_valid, error_message = validate_url(url)
+    if not is_valid:
+        logger.error(f"Invalid URL: {error_message}")
+        return False, 400
+        
     try:
         async with client.stream('GET', url, timeout=timeout) as response:
             if response.status_code != 200:
@@ -58,7 +97,7 @@ async def verify_mcp_url(request: McpUrlVerifyRequest):
         return {"success": False, "message": "无法连接到MCP服务"}
     except Exception as e:
         logging.error(f"Failed to verify MCP URL: {str(e)}")
-        return {"success": False, "message": "验证MCP URL失败，请联系管理员。"}
+        return {"success": False, "message": f"验证MCP URL失败: {str(e)}"}
 
 @router.get("/list")
 async def list_mcp_service():
@@ -73,4 +112,4 @@ async def list_mcp_service():
         return {"success": True, "mcp_list": mcp_list}
     except Exception as e:
         logging.error(f"Failed to get MCP service URL: {str(e)}")
-        return {"success": False, "message": "获取MCP服务地址失败，请联系管理员。"}
+        return {"success": False, "message": f"获取MCP服务地址失败: {str(e)}"}
