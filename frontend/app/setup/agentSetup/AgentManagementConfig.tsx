@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
-import { Typography, Input, Button, Switch, Modal, message, Select, InputNumber, Tooltip, Badge } from 'antd'
-import { SettingOutlined } from '@ant-design/icons'
+import { Typography, Input, Button, Switch, Modal, message, Select, InputNumber, Tag, Upload, Tooltip, Badge } from 'antd'
+import { SettingOutlined, UploadOutlined, ThunderboltOutlined, LoadingOutlined } from '@ant-design/icons'
 import { FiRefreshCw } from 'react-icons/fi'
 import ToolConfigModal from './components/ToolConfigModal'
 import AgentModalComponent from './components/AgentModal'
-import { AgentModalProps, Tool, BusinessLogicInputProps, SubAgentPoolProps, ToolPoolProps, BusinessLogicConfigProps, Agent, OpenAIModel } from './ConstInterface'
+import { Tool, BusinessLogicInputProps, SubAgentPoolProps, ToolPoolProps, BusinessLogicConfigProps, Agent, OpenAIModel } from './ConstInterface'
 import { ScrollArea } from '@/components/ui/scrollArea'
-import { getCreatingSubAgentId, fetchAgentList, updateToolConfig, searchToolConfig, updateAgent, fetchRescanTools, fetchTools } from '@/services/agentConfigService'
+import { getCreatingSubAgentId, fetchAgentList, updateToolConfig, searchToolConfig, updateAgent, importAgent, fetchRescanTools, fetchTools } from '@/services/agentConfigService'
+import {generatePromptStream, savePrompt} from '@/services/promptService'
 import { API_ENDPOINTS } from '@/services/api'
 
 const { Text } = Typography
@@ -26,6 +27,12 @@ const handleToolSelectCommon = async (
   mainAgentId: string | null | undefined,
   onSuccess?: (tool: Tool, isSelected: boolean) => void
 ) => {
+  // 首先检查工具是否可用
+  if (tool.is_available === false) {
+    message.error('该工具当前不可用，无法选择');
+    return { shouldProceed: false, params: {} };
+  }
+
   if (!mainAgentId) {
     message.error('主代理ID未设置，无法更新工具状态');
     return { shouldProceed: false, params: {} };
@@ -101,7 +108,7 @@ function BusinessLogicInput({ value, onChange, selectedAgents, systemPrompt }: B
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="请描述您的业务场景和需求..."
-          className="w-full h-full resize-none p-3 text-sm"
+          className="w-full h-full resize-none p-3 text-base"
           style={{ height: '100%' }}
           autoSize={false}
         />
@@ -118,9 +125,11 @@ function SubAgentPool({
   onSelectAgent, 
   onEditAgent, 
   onCreateNewAgent, 
-  subAgentList = [], 
+  onImportAgent,
+  subAgentList = [],
   loadingAgents = false,
-  enabledAgentIds = []
+  enabledAgentIds = [],
+  isImporting = false
 }: SubAgentPoolProps) {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -130,31 +139,56 @@ function SubAgentPool({
       </div>
       <ScrollArea className="flex-1 min-h-0 border-t pt-2 pb-2">
         <div className="grid grid-cols-1 gap-3 pr-2">
-          <div 
-            className="border rounded-md p-3 flex flex-col justify-center items-center cursor-pointer transition-colors duration-200 h-[80px] hover:border-blue-300 hover:bg-blue-50"
-            onClick={onCreateNewAgent}
-          >
-            <div className="flex items-center justify-center h-full text-blue-500">
-              <span className="text-lg mr-2">+</span>
-              <span className="text-sm">新建Agent</span>
+          <div className="flex gap-2 mb-2">
+            <div
+              className="flex-1 border rounded-md p-3 flex flex-col justify-center items-center cursor-pointer transition-colors duration-200 h-[80px] hover:border-blue-300 hover:bg-blue-50"
+              onClick={onCreateNewAgent}
+            >
+              <div className="flex items-center justify-center h-full text-blue-500">
+                <span className="text-lg mr-2">+</span>
+                <span className="text-sm">新建Agent</span>
+              </div>
+            </div>
+
+            <div
+              className={`flex-1 border rounded-md p-3 flex flex-col justify-center items-center transition-colors duration-200 h-[80px] ${
+                isImporting
+                  ? 'opacity-50 cursor-not-allowed border-gray-300'
+                  : 'cursor-pointer hover:border-green-300 hover:bg-green-50'
+              }`}
+              onClick={isImporting ? undefined : onImportAgent}
+            >
+              <div className={`flex items-center justify-center h-full ${isImporting ? 'text-gray-400' : 'text-green-500'}`}>
+                <UploadOutlined className="text-lg mr-2" />
+                <span className="text-sm">{isImporting ? '导入中...' : '导入Agent'}</span>
+              </div>
             </div>
           </div>
-          
+
           {subAgentList.map((agent) => {
             const isEnabled = enabledAgentIds.includes(Number(agent.id));
+            const isAvailable = agent.is_available !== false; // 默认为true，只有明确为false时才不可用
             return (
               <div 
                 key={agent.id} 
-                className={`border rounded-md p-3 flex flex-col justify-center cursor-pointer transition-colors duration-200 h-[80px] ${
-                  isEnabled ? 'bg-blue-100 border-blue-400' : 'hover:border-blue-300'
+                className={`border rounded-md p-3 flex flex-col justify-center transition-colors duration-200 h-[80px] ${
+                  !isAvailable
+                    ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
+                    : isEnabled
+                      ? 'bg-blue-100 border-blue-400 cursor-pointer'
+                      : 'hover:border-blue-300 cursor-pointer'
                 }`}
-                onClick={() => onSelectAgent(agent, !isEnabled)}
+                title={!isAvailable ? 'Agent不可用' : undefined}
+                onClick={() => {
+                  if (!isAvailable) return;
+                  onSelectAgent(agent, !isEnabled);
+                }}
               >
                 <div className="flex items-center h-full">
                   <div className="flex-1 overflow-hidden">
-                    <div className="font-medium text-sm truncate" title={agent.name}>{agent.name}</div>
+                    <div className={`font-medium text-sm truncate ${!isAvailable ? 'text-gray-400' : ''}`} title={!isAvailable ? 'Agent不可用' : agent.name}>{agent.name}</div>
                     <div 
-                      className="text-xs text-gray-500 line-clamp-2" 
+                      className={`text-xs line-clamp-2 ${!isAvailable ? 'text-gray-400' : 'text-gray-500'}`}
                       title={agent.description}
                     >
                       {agent.description}
@@ -166,7 +200,9 @@ function SubAgentPool({
                       e.stopPropagation();
                       onEditAgent(agent);
                     }}
-                    className="ml-2 flex-shrink-0 flex items-center justify-center text-gray-500 hover:text-blue-500 bg-transparent"
+                    className={`ml-2 flex-shrink-0 flex items-center justify-center bg-transparent ${
+                      !isAvailable ? 'text-gray-400 hover:text-gray-600' : 'text-gray-500 hover:text-blue-500'
+                    }`}
                     style={{ border: "none", padding: "4px" }}
                   >
                     <SettingOutlined style={{ fontSize: '16px' }} />
@@ -224,7 +260,7 @@ function ToolPool({
       message.error('请输入MCP地址');
       return;
     }
-    
+
     // Set loading state and update connection status
     setIsVerifying(true);
     setMcpConnectionStatus('processing');
@@ -239,7 +275,7 @@ function ToolPool({
           mcp_url: mcpAddress
         })
       });
-      
+
       const data = await response.json();
       // Update UI based on verification result
       if (data.success) {
@@ -368,36 +404,45 @@ function ToolPool({
   // Use memo to optimize the rendering of tool items
   const ToolItem = memo(({ tool }: { tool: Tool }) => {
     const isSelected = selectedToolIds.has(tool.id);
-    
+    const isAvailable = tool.is_available !== false; // 默认为true，只有明确为false时才不可用
+
     return (
       <div 
-        className={`border rounded-md p-3 flex flex-col justify-center transition-colors duration-200 h-[80px] ${
-          isSelected ? 'bg-blue-100 border-blue-400' : 'hover:border-blue-300'
-        } ${localIsGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`border rounded-md p-2 flex items-center transition-colors duration-200 min-h-[45px] ${
+          !isAvailable
+            ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
+            : isSelected
+              ? 'bg-blue-100 border-blue-400'
+              : 'hover:border-blue-300'
+        } ${localIsGenerating && isAvailable ? 'opacity-50 cursor-not-allowed' : isAvailable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+        title={!isAvailable ? '工具不可用' : undefined}
         onClick={(e) => {
-          if (localIsGenerating) return;
+          if (localIsGenerating || !isAvailable) return;
           handleToolSelect(tool, !isSelected, e);
         }}
       >
-        <div className="flex items-center h-full">
-          <div className="flex-1 overflow-hidden">
-            <div className="font-medium text-sm truncate" title={tool.name}>{tool.name}</div>
-            <div 
-              className="text-xs text-gray-500 line-clamp-2" 
-              title={tool.description}
-            >
-              {tool.description}
-            </div>
+        {/* Tool name left */}
+        <div className="flex-1 overflow-hidden">
+          <div className={`font-medium text-sm truncate ${!isAvailable ? 'text-gray-400' : ''}`} title={!isAvailable ? '工具不可用' : tool.name}>
+            {tool.name}
+          </div>
+        </div>
+        {/* Tag and settings button right */}
+        <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center justify-start min-w-[90px] w-[90px]">
+            <Tag color={tool?.source === 'mcp' ? 'blue' : 'green'} className={`w-full text-center ${!isAvailable ? 'opacity-50' : ''}`}>
+              {tool?.source === 'mcp' ? 'MCP工具' : '本地工具'}
+            </Tag>
           </div>
           <button 
             type="button"
             onClick={(e) => {
-              if (localIsGenerating) return;
+              if (localIsGenerating || !isAvailable) return;
               handleConfigClick(tool, e);
             }}
-            disabled={localIsGenerating}
-            className={`ml-2 flex-shrink-0 flex items-center justify-center bg-transparent ${
-              localIsGenerating ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-500'
+            disabled={localIsGenerating || !isAvailable}
+            className={`flex-shrink-0 flex items-center justify-center bg-transparent ${
+              localIsGenerating || !isAvailable ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-500'
             }`}
             style={{ border: "none", padding: "4px" }}
           >
@@ -435,9 +480,9 @@ function ToolPool({
           <Button key="cancel" onClick={() => setIsMcpModalOpen(false)}>
             取消
           </Button>,
-          <Button 
-            key="submit" 
-            type="primary" 
+          <Button
+            key="submit"
+            type="primary"
             onClick={() => {
               handleRescanMcpTools();
               setIsMcpModalOpen(false);
@@ -457,7 +502,7 @@ function ToolPool({
           />
           <Badge status={mcpConnectionStatus} />
           <Tooltip title="校验">
-            <Button 
+            <Button
               icon={<FiRefreshCw className={isVerifying ? "animate-spin" : ""} />}
               size="small"
               type="text"
@@ -475,7 +520,7 @@ function ToolPool({
             <span className="text-gray-500">加载工具中...</span>
           </div>
         ) : (
-          <div className={`grid ${isCreatingNewAgent ? 'grid-cols-4' : 'grid-cols-2'} gap-3 pr-2`}>
+          <div className="flex flex-col gap-3 pr-2">
             {displayTools.map((tool) => (
               <ToolItem key={tool.id} tool={tool} />
             ))}
@@ -516,10 +561,7 @@ export default function BusinessLogicConfig({
   setMainAgentModel,
   mainAgentMaxStep,
   setMainAgentMaxStep,
-  mainAgentPrompt,
-  setMainAgentPrompt,
   tools,
-  loadingTools,
   subAgentList = [],
   loadingAgents = false,
   mainAgentId,
@@ -527,7 +569,6 @@ export default function BusinessLogicConfig({
   setSubAgentList,
   enabledAgentIds,
   setEnabledAgentIds,
-  localIsGenerating,
   mcpList,
   setTools
 }: BusinessLogicConfigProps) {
@@ -536,6 +577,11 @@ export default function BusinessLogicConfig({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [enabledToolIds, setEnabledToolIds] = useState<number[]>([]);
   const [isLoadingTools, setIsLoadingTools] = useState(false);
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isPromptGenerating, setIsPromptGenerating] = useState(false);
+  const [isPromptSaving, setIsPromptSaving] = useState(false);
+  const [localIsGenerating, setLocalIsGenerating] = useState(false);
 
   const fetchSubAgentIdAndEnableToolList = async () => {
     setIsLoadingTools(true);
@@ -591,7 +637,6 @@ export default function BusinessLogicConfig({
       setBusinessLogic('');
       setMainAgentModel(OpenAIModel.MainModel);
       setMainAgentMaxStep(5);
-      setMainAgentPrompt('');
       refreshAgentList();
     }
   }, [isCreatingNewAgent]);
@@ -687,7 +732,7 @@ export default function BusinessLogicConfig({
   };
 
   const canSaveAsAgent = selectedAgents.length === 0 && systemPrompt.trim().length > 0;
-  
+
   // Generate more intelligent prompt information according to conditions
   const getButtonTitle = () => {
     if (selectedAgents.length > 0) {
@@ -751,6 +796,12 @@ export default function BusinessLogicConfig({
 
   // Handle the update of the Agent selection status
   const handleAgentSelect = async (agent: Agent, isSelected: boolean) => {
+    // 首先检查Agent是否可用
+    if (agent.is_available === false) {
+      message.error('该Agent当前不可用，无法选择');
+      return;
+    }
+
     try {
       const result = await updateAgent(
         Number(agent.id),
@@ -844,6 +895,125 @@ export default function BusinessLogicConfig({
     }
   };
 
+  // Handle importing agent
+  const handleImportAgent = () => {
+    if (!mainAgentId) {
+      message.error('主代理ID未设置，无法导入Agent');
+      return;
+    }
+
+    // Create a hidden file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Check file type
+      if (!file.name.endsWith('.json')) {
+        message.error('请选择JSON格式的文件');
+        return;
+      }
+
+      setIsImporting(true);
+      try {
+        // Read file content
+        const fileContent = await file.text();
+        let agentInfo;
+
+        try {
+          agentInfo = JSON.parse(fileContent);
+        } catch (parseError) {
+          message.error('文件格式错误，请检查JSON格式');
+          setIsImporting(false);
+          return;
+        }
+
+        // Call import API
+        const result = await importAgent(mainAgentId, agentInfo);
+
+        if (result.success) {
+          message.success('Agent导入成功');
+          // Refresh agent list
+          refreshAgentList();
+        } else {
+          message.error(result.message || 'Agent导入失败');
+        }
+      } catch (error) {
+        console.error('导入Agent失败:', error);
+        message.error('导入Agent失败，请检查文件内容');
+      } finally {
+        setIsImporting(false);
+      }
+    };
+
+    fileInput.click();
+  };
+
+  // Generate system prompt
+  const handleGenerateSystemPrompt = async () => {
+    if (!businessLogic || businessLogic.trim() === '') {
+      message.warning('请先输入业务描述');
+      return;
+    }
+    if (!mainAgentId) {
+      message.warning('无法生成提示词：未指定Agent ID');
+      return;
+    }
+    try {
+      setIsPromptGenerating(true);
+      setLocalIsGenerating(true);
+      setSystemPrompt('');
+      await generatePromptStream(
+        {
+          agent_id: Number(mainAgentId),
+          task_description: businessLogic
+        },
+        (streamedText) => {
+          setSystemPrompt(streamedText);
+        },
+        (err) => {
+          message.error(`生成提示词失败: ${err instanceof Error ? err.message : '未知错误'}`);
+          setIsPromptGenerating(false);
+          setLocalIsGenerating(false);
+        },
+        () => {
+          setIsPromptGenerating(false);
+          setLocalIsGenerating(false);
+          message.success('提示词生成成功');
+        }
+      );
+    } catch (error) {
+      console.error('生成提示词失败:', error);
+      message.error(`生成提示词失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      setIsPromptGenerating(false);
+      setLocalIsGenerating(false);
+    }
+  };
+
+  // Save system prompt
+  const handleSaveSystemPrompt = async () => {
+    if (!mainAgentId) {
+      message.warning('无法保存提示词：未指定Agent ID');
+      return;
+    }
+    if (!systemPrompt || systemPrompt.trim() === '') {
+      message.warning('提示词为空，无法保存');
+      return;
+    }
+    try {
+      setIsPromptSaving(true);
+      await savePrompt({ agent_id: Number(mainAgentId), prompt: systemPrompt });
+      message.success('提示词已保存');
+    } catch (error) {
+      console.error('保存提示词失败:', error);
+      message.error('保存提示词失败，请重试');
+    } finally {
+      setIsPromptSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full gap-0 justify-between">
       {/* Upper part: Agent pool + Tool pool */}
@@ -854,9 +1024,11 @@ export default function BusinessLogicConfig({
             onSelectAgent={handleAgentSelect}
             onEditAgent={handleEditAgent}
             onCreateNewAgent={handleCreateNewAgent}
+            onImportAgent={handleImportAgent}
             subAgentList={subAgentList}
             loadingAgents={loadingAgents}
             enabledAgentIds={enabledAgentIds}
+            isImporting={isImporting}
           />
         </div>
         <div className={`${isCreatingNewAgent ? 'w-full' : 'flex-1'} h-full`}>
@@ -885,7 +1057,7 @@ export default function BusinessLogicConfig({
       </div>
 
       {/* The second half: business logic description */}
-      <div className="flex gap-4 h-[240px] pb-4 pr-4 pl-4">
+      <div className="flex gap-4 h-[240px] pb-4 pr-4 pl-4 items-start">
         <div className="flex-1 h-full">
           <BusinessLogicInput 
             value={businessLogic} 
@@ -894,7 +1066,7 @@ export default function BusinessLogicConfig({
             systemPrompt={systemPrompt}
           />
         </div>
-        <div className="w-[280px] h-[200px] flex flex-col">
+        <div className="w-[280px] h-[200px] flex flex-col self-start">
           <div className="flex flex-col gap-5 flex-1">
             <div>
               <span className="block text-lg font-medium mb-2">模型</span>
@@ -915,24 +1087,43 @@ export default function BusinessLogicConfig({
                 className="w-full"
               />
             </div>
-            <div className="flex justify-end gap-2 w-full mt-2">
+            <div className="flex justify-start gap-2 w-full mt-4">
+              <button
+                onClick={handleGenerateSystemPrompt}
+                disabled={isPromptGenerating || isPromptSaving}
+                className="px-3.5 py-1.5 rounded-md flex items-center justify-center text-sm bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: 'none' }}
+              >
+                {isPromptGenerating ? (
+                  <>
+                    <LoadingOutlined spin className="mr-1" />
+                    智能生成提示词
+                  </>
+                ) : (
+                  <>
+                    <ThunderboltOutlined className="mr-1" />
+                    智能生成提示词
+                  </>
+                )}
+              </button>
               {isCreatingNewAgent && (
                 <>
-                  <button
-                    onClick={handleCancelCreating}
-                    className="px-4 py-1.5 rounded-md flex items-center justify-center text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    style={{ border: "none" }}
-                  >
-                    取消
-                  </button>
                   <button
                     onClick={handleSaveAsAgent}
                     disabled={!canSaveAsAgent}
                     title={getButtonTitle()}
-                    className="px-4 py-1.5 rounded-md flex items-center justify-center text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-1.5 rounded-md flex items-center justify-center text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ border: "none" }}
                   >
-                    保存到Agent池
+                    {isPromptSaving ? '保存中...' : '保存'}
+                  </button>
+                  <button
+                    onClick={handleCancelCreating}
+                    disabled={isPromptGenerating || isPromptSaving}
+                    className="px-4 py-1.5 rounded-md flex items-center justify-center text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ border: 'none' }}
+                  >
+                    取消
                   </button>
                 </>
               )}

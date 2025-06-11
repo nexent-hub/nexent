@@ -89,7 +89,6 @@ export const KnowledgeBaseContext = createContext<{
   isKnowledgeBaseSelectable: (kb: KnowledgeBase) => boolean;
   refreshKnowledgeBaseData: (forceRefresh?: boolean) => Promise<void>;
   summaryIndex: (indexName: string, batchSize: number) => Promise<string>;
-  changeSummary: (indexName: string, summary: string) => Promise<string>;
 }>({
   state: {
     knowledgeBases: [],
@@ -108,7 +107,6 @@ export const KnowledgeBaseContext = createContext<{
   isKnowledgeBaseSelectable: () => false,
   refreshKnowledgeBaseData: async () => {},
   summaryIndex: async () => '',
-  changeSummary: async () => '',
 });
 
 // Custom hook for using the context
@@ -301,18 +299,7 @@ export const KnowledgeBaseProvider: React.FC<KnowledgeBaseProviderProps> = ({ ch
       const result = await knowledgeBaseService.summaryIndex(indexName, batchSize);
       return result;
     } catch (error) {
-      dispatch({ type: 'ERROR', payload: error as Error });
-      throw error;
-    }
-  }, []);
-
-  // Modify the summary of the knowledge base
-  const changekKnowledgeSummary = useCallback(async (indexName: string, summary: string) => {
-    try {
-      const result = await knowledgeBaseService.changeSummary(indexName, summary);
-      return result;
-    } catch (error) {
-      dispatch({ type: 'ERROR', payload: error as Error });
+      dispatch({ type: 'ERROR', payload: error as string });
       throw error;
     }
   }, []);

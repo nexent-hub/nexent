@@ -11,7 +11,7 @@ import { OpenAIModel } from '@/app/setup/agentSetup/ConstInterface'
 
 // Layout Height Constant Configuration
 const LAYOUT_CONFIG = {
-  MAIN_CONTENT_HEIGHT: "calc(75vh - 45px)",
+  MAIN_CONTENT_HEIGHT: "72.5vh",
   CARD_HEADER_PADDING: "10px 24px",
   CARD_BODY_PADDING: "12px 20px",
   CARD_GAP: 12,
@@ -24,7 +24,6 @@ const LAYOUT_CONFIG = {
 export default function AgentConfig() {
   const [businessLogic, setBusinessLogic] = useState("")
   const [systemPrompt, setSystemPrompt] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
   const [selectedAgents, setSelectedAgents] = useState<any[]>([])
   const [selectedTools, setSelectedTools] = useState<any[]>([])
   const [testQuestion, setTestQuestion] = useState("")
@@ -33,21 +32,18 @@ export default function AgentConfig() {
   const [isCreatingNewAgent, setIsCreatingNewAgent] = useState(false)
   const [mainAgentModel, setMainAgentModel] = useState(OpenAIModel.MainModel)
   const [mainAgentMaxStep, setMainAgentMaxStep] = useState(5)
-  const [mainAgentPrompt, setMainAgentPrompt] = useState("")
   const [tools, setTools] = useState<any[]>([])
-  const [loadingTools, setLoadingTools] = useState(false)
   const [mainAgentId, setMainAgentId] = useState<string | null>(null)
   const [subAgentList, setSubAgentList] = useState<any[]>([])
   const [loadingAgents, setLoadingAgents] = useState(false)
   const [enabledToolIds, setEnabledToolIds] = useState<number[]>([])
   const [enabledAgentIds, setEnabledAgentIds] = useState<number[]>([])
-  const [localIsGenerating, setLocalIsGenerating] = useState(false)
   const [mcpList, setMcpList] = useState<any[]>([])
+  const [currentGuideStep, setCurrentGuideStep] = useState<number | undefined>(undefined)
 
   // load tools when page is loaded
   useEffect(() => {
     const loadTools = async () => {
-      setLoadingTools(true)
       try {
         const result = await fetchTools()
         if (result.success) {
@@ -58,8 +54,6 @@ export default function AgentConfig() {
       } catch (error) {
         console.error('加载工具列表失败:', error)
         message.error('获取工具列表失败，请刷新页面重试')
-      } finally {
-        setLoadingTools(false)
       }
     }
     
@@ -146,6 +140,7 @@ export default function AgentConfig() {
         enabledToolIds.includes(Number(tool.id))
       );
       setSelectedTools(enabledTools);
+      setCurrentGuideStep(undefined);
     }
   }, [tools, enabledToolIds]);
 
@@ -156,6 +151,7 @@ export default function AgentConfig() {
         enabledAgentIds.includes(Number(agent.id))
       );
       setSelectedAgents(enabledAgents);
+      setCurrentGuideStep(undefined);
     }
   }, [subAgentList, enabledAgentIds]);
 
@@ -168,18 +164,17 @@ export default function AgentConfig() {
     setSelectedTools([]);
     setTestQuestion('');
     setTestAnswer('');
-    
+    setCurrentGuideStep(undefined);
     // Reset the main agent configuration related status
     if (!isCreatingNewAgent) {
       setMainAgentModel(OpenAIModel.MainModel);
       setMainAgentMaxStep(5);
-      setMainAgentPrompt('');
     }
   }, [isCreatingNewAgent]);
 
 
   return (
-    <div className="w-full h-full mx-auto px-4" style={{ maxWidth: "1920px" }}>
+    <div className="w-full h-full mx-auto px-4" style={{ maxWidth: "1920px"}}>
       <div className="w-full h-full">
         <Row gutter={[LAYOUT_CONFIG.CARD_GAP, LAYOUT_CONFIG.CARD_GAP]} className="h-full">
           {/* Left Timeline Guide */}
@@ -200,8 +195,7 @@ export default function AgentConfig() {
                   selectedTools={selectedTools}
                   selectedAgents={selectedAgents}
                   mainAgentId={mainAgentId}
-                  subAgentList={subAgentList}
-                  loadingAgents={loadingAgents}
+                  currentStep={currentGuideStep}
                 />
               </div>
             </div>
@@ -230,10 +224,7 @@ export default function AgentConfig() {
                   setMainAgentModel={setMainAgentModel}
                   mainAgentMaxStep={mainAgentMaxStep}
                   setMainAgentMaxStep={setMainAgentMaxStep}
-                  mainAgentPrompt={mainAgentPrompt}
-                  setMainAgentPrompt={setMainAgentPrompt}
                   tools={tools}
-                  loadingTools={loadingTools}
                   subAgentList={subAgentList}
                   loadingAgents={loadingAgents}
                   mainAgentId={mainAgentId}
@@ -241,7 +232,6 @@ export default function AgentConfig() {
                   setSubAgentList={setSubAgentList}
                   enabledAgentIds={enabledAgentIds}
                   setEnabledAgentIds={setEnabledAgentIds}
-                  localIsGenerating={localIsGenerating}
                   mcpList={mcpList}
                   setTools={setTools}
                 />
@@ -260,11 +250,11 @@ export default function AgentConfig() {
                 <SystemPromptDisplay
                   prompt={systemPrompt}
                   onPromptChange={setSystemPrompt}
-                  isGenerating={isGenerating}
-                  onDebug={() => setIsDebugDrawerOpen(true)}
+                  onDebug={() => {
+                    setIsDebugDrawerOpen(true);
+                    setCurrentGuideStep(isCreatingNewAgent ? 4 : 5);
+                  }}
                   agentId={mainAgentId ? parseInt(mainAgentId) : undefined}
-                  taskDescription={businessLogic}
-                  onLocalIsGeneratingChange={setLocalIsGenerating}
                 />
               </div>
             </div>

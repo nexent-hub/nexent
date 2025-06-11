@@ -88,10 +88,11 @@ install() {
 }
 
 # Main execution flow
-echo "=== Nexent Deployment Script ==="
+echo "🚀 Nexent Deployment Script 🚀"
 select_deployment_mode
 add_permission
 generate_minio_ak_sk
 install
 clean
-echo "Deployment completed!"
+echo "🚀 Deployment completed!"
+echo "🔗 You can access the application at http://localhost:3000"

@@ -211,8 +211,19 @@ export function ChatStreamFinalMessage({
             
             {/* Text content */}
             {message.content && (
-              <div className="rounded-lg border bg-blue-50 border-blue-100 user-message-container px-3 ml-auto text-sm">
-                <div className="user-message-content whitespace-pre-wrap py-2">
+              <div className="rounded-lg border bg-blue-50 border-blue-100 user-message-container px-3 ml-auto text-normal" style={{
+                maxWidth: "80%",
+                wordWrap: "break-word",
+                wordBreak: "break-word",
+                overflowWrap: "break-word"
+              }}>
+                <div className="user-message-content whitespace-pre-wrap py-2" style={{
+                  wordWrap: "break-word",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                  whiteSpace: "pre-wrap",
+                  maxWidth: "100%"
+                }}>
                   {message.content}
                 </div>
               </div>

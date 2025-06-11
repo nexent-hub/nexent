@@ -16,6 +16,7 @@ export interface Agent {
   tools: Tool[];
   prompt: string;
   business_description?: string;
+  is_available?: boolean;
 }
 
 export interface Tool {
@@ -24,6 +25,7 @@ export interface Tool {
   description: string;
   source: 'local' | 'mcp';
   initParams: ToolParam[];
+  is_available?: boolean;
 }
 
 export interface ToolParam {
@@ -59,9 +61,11 @@ export interface SubAgentPoolProps {
   onSelectAgent: (agent: Agent, isSelected: boolean) => void;
   onEditAgent: (agent: Agent) => void;
   onCreateNewAgent: () => void;
+  onImportAgent: () => void;
   subAgentList?: Agent[];
   loadingAgents?: boolean;
   enabledAgentIds?: number[];
+  isImporting?: boolean;
 }
 // tool pool component props interface
 export interface ToolPoolProps {
@@ -92,10 +96,7 @@ export interface BusinessLogicConfigProps {
   setMainAgentModel: (value: OpenAIModel) => void;
   mainAgentMaxStep: number;
   setMainAgentMaxStep: (value: number) => void;
-  mainAgentPrompt: string;
-  setMainAgentPrompt: (value: string) => void;
   tools?: Tool[];
-  loadingTools?: boolean;
   subAgentList?: Agent[];
   loadingAgents?: boolean;
   mainAgentId: string | null;
@@ -103,7 +104,6 @@ export interface BusinessLogicConfigProps {
   setSubAgentList: (agents: Agent[]) => void;
   enabledAgentIds: number[];
   setEnabledAgentIds: (ids: number[]) => void;
-  localIsGenerating: boolean;
   mcpList?: any[];
   setTools: (tools: Tool[]) => void;
 }

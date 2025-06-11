@@ -11,13 +11,14 @@ from pydantic import Field
 
 class GetEmailTool(Tool):
     name = "get_email"
-    description = "Get emails from email server. Supports filtering emails by time range, sender, subject, etc."
+    description = (
+        "Get emails from email server. Supports filtering emails by time range and sender (sender must be an email address, not a name or non-ASCII string; subject filtering is not supported due to IMAP limitations)."
+    )
 
     inputs = {
         "days": {"type": "integer", "description": "Get emails from the past few days, default is 7 days", "default": 7,
                  "nullable": True},
-        "sender": {"type": "string", "description": "Filter by sender, optional", "nullable": True},
-        "subject": {"type": "string", "description": "Filter by subject, optional", "nullable": True},
+        "sender": {"type": "string", "description": "Filter by sender (must be an email address, not a name or non-ASCII string)", "nullable": True},
         "max_emails": {"type": "integer", "description": "Maximum number of emails to retrieve, default is 10",
                        "default": 10, "nullable": True}}
     output_type = "string"
@@ -71,7 +72,7 @@ class GetEmailTool(Tool):
 
         return email_data
 
-    def forward(self, days: int = 7, sender: str = None, subject: str = None, max_emails: int = 10) -> List[str]:
+    def forward(self, days: int = 7, sender: str = None, max_emails: int = 10) -> List[str]:
         try:
             # 连接IMAP服务器
             mail = imaplib.IMAP4_SSL(self.imap_server, self.imap_port) if self.use_ssl else imaplib.IMAP4(
@@ -90,10 +91,6 @@ class GetEmailTool(Tool):
             # 添加发件人条件
             if sender:
                 search_criteria.append(f'(FROM "{sender}")')
-
-            # 添加主题条件
-            if subject:
-                search_criteria.append(f'(SUBJECT "{subject}")')
 
             # 执行搜索
             search_query = ' '.join(search_criteria)
@@ -127,3 +124,4 @@ class GetEmailTool(Tool):
         except Exception as e:
             print(f"Unexpected Error: {str(e)}")
             return [json.dumps({"error": f"An unexpected error occurred: {str(e)}"}, ensure_ascii=False)]
+        

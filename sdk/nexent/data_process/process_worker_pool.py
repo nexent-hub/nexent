@@ -542,7 +542,6 @@ class ProcessWorkerPool:
                     elements = partition(filename=source, max_characters=1500, new_after_n_chars=500,
                                          **partition_kwargs)
                 finally:
-                    import os
                     if os.path.exists(temp_path):
                         os.unlink(temp_path)
 

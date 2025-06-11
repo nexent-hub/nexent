@@ -98,7 +98,7 @@ export const ModelAddDialog = ({ isOpen, onClose, onSuccess }: ModelAddDialogPro
         name: form.name,
         type: modelType,
         url: form.url,
-        apiKey: form.apiKey,
+        apiKey: form.apiKey.trim() === "" ? "sk-no-api-key" : form.apiKey,
         maxTokens: maxTokensValue,
         displayName: form.displayName || form.name
       })

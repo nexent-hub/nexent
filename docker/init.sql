@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS nexent.ag_tool_info_t (
     params JSON,
     inputs VARCHAR,
     output_type VARCHAR(100),
+    is_available BOOLEAN DEFAULT FALSE,
     create_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(100),
@@ -265,6 +266,7 @@ COMMENT ON COLUMN nexent.ag_tool_info_t.usage IS 'Usage';
 COMMENT ON COLUMN nexent.ag_tool_info_t.params IS 'Tool parameter information (json)';
 COMMENT ON COLUMN nexent.ag_tool_info_t.inputs IS 'Prompt tool inputs description';
 COMMENT ON COLUMN nexent.ag_tool_info_t.output_type IS 'Prompt tool output description';
+COMMENT ON COLUMN nexent.ag_tool_info_t.is_available IS 'Whether the tool can be used under the current main service';
 COMMENT ON COLUMN nexent.ag_tool_info_t.create_time IS 'Creation time';
 COMMENT ON COLUMN nexent.ag_tool_info_t.update_time IS 'Update time';
 COMMENT ON COLUMN nexent.ag_tool_info_t.created_by IS 'Creator';

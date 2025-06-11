@@ -1,17 +1,15 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Layout, Typography, Row, Col } from "antd"
+import { Typography, Row, Col } from "antd"
 import { AppConfigSection } from './appConfig'
 import { ModelConfigSection, ModelConfigSectionRef } from './modelConfig'
-import { useConfig } from '@/hooks/useConfig'
 
-// 重构：是否有必要引入
 const { Title } = Typography
 
 // 添加布局高度常量配置
 const LAYOUT_CONFIG = {
-  MAIN_CONTENT_HEIGHT: "calc(70vh - 48px)",
+  MAIN_CONTENT_HEIGHT: "67.2vh",
 }
 
 // 添加接口定义
@@ -22,7 +20,6 @@ interface AppModelConfigProps {
 export default function AppModelConfig({ skipModelVerification = false }: AppModelConfigProps) {
   const [isClientSide, setIsClientSide] = useState(false)
   const modelConfigRef = useRef<ModelConfigSectionRef | null>(null)
-  const { modelConfig } = useConfig()
 
   // 添加useEffect钩子用于初始化加载配置
   useEffect(() => {

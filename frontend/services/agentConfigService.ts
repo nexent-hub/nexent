@@ -19,6 +19,7 @@ export const fetchTools = async () => {
       name: tool.name,
       description: tool.description,
       source: tool.source,
+      is_available: tool.is_available,
       initParams: tool.params.map(param => {
         return {
           name: param.name,
@@ -151,6 +152,7 @@ export const fetchAgentList = async () => {
       business_description: agent.business_description,
       parentAgentId: agent.parent_agent_id,
       enabled: agent.enabled,
+      is_available: agent.is_available,
       createTime: agent.create_time,
       updateTime: agent.update_time,
       tools: agent.tools ? agent.tools.map((tool: any) => {
@@ -160,6 +162,7 @@ export const fetchAgentList = async () => {
           name: tool.name,
           description: tool.description,
           source: tool.source,
+          is_available: tool.is_available,
           initParams: Array.isArray(params) ? params.map((param: any) => ({
             name: param.name,
             type: convertParamType(param.type),
@@ -412,9 +415,7 @@ export const deleteAgent = async (agentId: number) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        agent_id: agentId
-      }),
+      body: JSON.stringify({ agent_id: agentId }),
     });
 
     if (!response.ok) {
@@ -430,6 +431,89 @@ export const deleteAgent = async (agentId: number) => {
     return {
       success: false,
       message: '删除 Agent 失败，请稍后重试'
+    };
+  }
+};
+
+/**
+ * export agent configuration
+ * @param agentId agent id to export
+ * @returns export result
+ */
+export const exportAgent = async (agentId: number) => {
+  try {
+    const response = await fetch(API_ENDPOINTS.agent.export, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ agent_id: agentId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.code === 0) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } else {
+      return {
+        success: false,
+        data: null,
+        message: data.message || '导出失败'
+      };
+    }
+  } catch (error) {
+    console.error('导出 Agent 失败:', error);
+    return {
+      success: false,
+      data: null,
+      message: '导出失败，请稍后重试'
+    };
+  }
+};
+
+/**
+ * import agent configuration
+ * @param agentId main agent id
+ * @param agentInfo agent configuration data
+ * @returns import result
+ */
+export const importAgent = async (agentId: string, agentInfo: any) => {
+  try {
+    const response = await fetch(API_ENDPOINTS.agent.import, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        agent_id: agentId, 
+        agent_info: agentInfo 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data,
+      message: 'Agent 导入成功'
+    };
+  } catch (error) {
+    console.error('导入 Agent 失败:', error);
+    return {
+      success: false,
+      data: null,
+      message: '导入 Agent 失败，请稍后重试'
     };
   }
 };

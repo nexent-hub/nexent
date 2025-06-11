@@ -285,7 +285,8 @@ export default function DebugConfig({
         () => {}, // setConversationTitle - Debug mode does not need
         async () => {}, // fetchConversationList - Debug mode does not need
         -1, // currentConversationId - Debug mode does not need
-        conversationService
+        conversationService,
+        true // isDebug: true for debug mode
       );
 
       // Update final answer

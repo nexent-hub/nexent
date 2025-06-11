@@ -1,7 +1,9 @@
-from consts.model import AgentInfoRequest
+from agents.create_agent_info import create_tool_config_list
+from consts.model import AgentInfoRequest, ExportAndImportAgentInfo, ToolInstanceInfoRequest
 from database.agent_db import create_agent, query_all_enabled_tool_instances, \
     query_or_create_main_agent_id, query_sub_agents, search_sub_agent_by_main_agent_id, \
-    search_tools_for_sub_agent, search_agent_info_by_agent_id, update_agent, delete_agent_by_id
+    search_tools_for_sub_agent, search_agent_info_by_agent_id, update_agent, delete_agent_by_id, query_all_tools, \
+    create_or_update_tool_by_tool_info, check_tool_is_available
 
 from utils.user_utils import get_user_info
 import logging
@@ -35,11 +37,6 @@ def get_creating_sub_agent_id_service(main_agent_id: int, tenant_id: str, user_i
                                         "parent_agent_id": main_agent_id}, tenant_id=tenant_id, user_id=user_id)["agent_id"]
 
 
-def query_or_create_main_agents_api(tenant_id: str, user_id: str = None):
-    main_agents_id = query_or_create_main_agent_id(tenant_id, user_id=user_id)
-    return main_agents_id
-
-
 def query_sub_agents_api(main_agent_id: int, tenant_id: str = None, user_id: str = None):
     sub_agents = query_sub_agents(main_agent_id, tenant_id, user_id)
 
@@ -47,6 +44,11 @@ def query_sub_agents_api(main_agent_id: int, tenant_id: str = None, user_id: str
         tool_info = search_tools_for_sub_agent(agent_id=sub_agent["agent_id"], tenant_id=tenant_id, user_id=user_id)
         sub_agent["tools"] = tool_info
 
+        tool_id_list = [tool["tool_id"] for tool in tool_info]
+        if all(check_tool_is_available(tool_id_list)):
+            sub_agent["is_available"] = True
+        else:
+            sub_agent["is_available"] = False
     return sub_agents
 
 
@@ -54,7 +56,7 @@ def list_main_agent_info_impl():
     user_id, tenant_id = get_user_info()
 
     try:
-        main_agent_id = query_or_create_main_agents_api(tenant_id=tenant_id, user_id=user_id)
+        main_agent_id = query_or_create_main_agent_id(tenant_id=tenant_id, user_id=user_id)
     except Exception as e:
         logger.error(f"Failed to get main agent id: {str(e)}")
         raise ValueError(f"Failed to get main agent id: {str(e)}")
@@ -146,3 +148,71 @@ def delete_agent_impl(agent_id: int):
     except Exception as e:
         logger.error(f"Failed to delete agent: {str(e)}")
         raise ValueError(f"Failed to delete agent: {str(e)}")
+
+async def export_agent_impl(agent_id: int):
+    user_id, tenant_id = get_user_info()
+
+    tool_list = await create_tool_config_list(agent_id=agent_id, tenant_id=tenant_id, user_id=user_id)
+    agent_info_in_db = search_agent_info_by_agent_id(agent_id=agent_id, tenant_id=tenant_id, user_id=user_id)
+
+    agent_info = ExportAndImportAgentInfo(name=agent_info_in_db["name"],
+                                          description=agent_info_in_db["description"],
+                                          business_description=agent_info_in_db["business_description"],
+                                          model_name=agent_info_in_db["model_name"],
+                                          max_steps=agent_info_in_db["max_steps"],
+                                          provide_run_summary=agent_info_in_db["provide_run_summary"],
+                                          prompt=agent_info_in_db["prompt"],
+                                          enabled=agent_info_in_db["enabled"],
+                                          tools=tool_list,
+                                          managed_agents=[])
+
+    agent_info_str = agent_info.model_dump_json()
+    return agent_info_str
+
+def import_agent_impl(parent_agent_id: int, agent_info: ExportAndImportAgentInfo):
+    # check the validity and completeness of the tool parameters
+    tool_list = []
+    tool_info = query_all_tools()
+    db_all_tool_info_dict = {f"{tool['class_name']}&{tool['source']}": tool for tool in tool_info}
+    for tool in agent_info.tools:
+        db_tool_info: dict | None = db_all_tool_info_dict.get(f"{tool.class_name}&{tool.source}", None)
+
+        if db_tool_info is None:
+            raise ValueError(f"Cannot find tool {tool.class_name} in {tool.source}.")
+
+        db_tool_info_params = db_tool_info["params"]
+        db_tool_info_params_name_set = set([param_info["name"] for param_info in db_tool_info_params])
+
+        for tool_param_name in tool.params:
+            if tool_param_name not in db_tool_info_params_name_set:
+                raise ValueError(f"Parameter {tool_param_name} in tool {tool.class_name} from {tool.source} cannot be found.")
+
+        tool_list.append(ToolInstanceInfoRequest(tool_id=db_tool_info['tool_id'],
+                                                 agent_id=-1,
+                                                 enabled=True,
+                                                 params=tool.params))
+    # check the validity of the agent parameters
+    if agent_info.model_name not in ["main_model", "sub_model"]:
+        raise ValueError(f"Invalid model name: {agent_info.model_name}. model name must be 'main_model' or 'sub_model'.")
+    if agent_info.max_steps <= 0 or agent_info.max_steps > 20:
+        raise ValueError(f"Invalid max steps: {agent_info.max_steps}. max steps must be greater than 0 and less than 20.")
+    if agent_info.name == "main":
+        raise ValueError(f"Invalid agent name: {agent_info.name}. agent name cannot be 'main'.")
+    # create a new agent
+    user_id, tenant_id = get_user_info()
+    new_agent = create_agent(agent_info={"name": agent_info.name,
+                            "description": agent_info.description,
+                            "business_description": agent_info.business_description,
+                            "model_name": agent_info.model_name,
+                            "max_steps": agent_info.max_steps,
+                            "provide_run_summary": agent_info.provide_run_summary,
+                            "prompt": agent_info.prompt,
+                            "enabled": agent_info.enabled,
+                            "parent_agent_id": parent_agent_id},
+                  tenant_id=tenant_id,
+                  user_id=user_id)
+    new_agent_id = new_agent["agent_id"]
+    # create tool_instance
+    for tool in tool_list:
+        tool.agent_id = new_agent_id
+        create_or_update_tool_by_tool_info(tool_info=tool, tenant_id=tenant_id, user_id=user_id)

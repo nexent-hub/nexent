@@ -134,16 +134,6 @@ Loads configuration from environment variables.
 }
 ```
 
-#### GET /api/config/get_config/selected_knowledge_base
-Gets list of selected knowledge bases.
-
-**Response:**
-```json
-{
-    "kb_names": ["string"]
-}
-```
-
 ## Conversation Management App
 
 ### Endpoints

@@ -5,7 +5,6 @@ import { InfoCircleFilled } from '@ant-design/icons'
 import UploadArea from '../components/UploadArea'
 import { formatFileSize, formatDateTime } from '@/lib/utils'
 import { Input, Button, Tooltip } from 'antd'
-import { useKnowledgeBaseContext } from '../knowledgeBase/KnowledgeBaseContext'
 import { message } from 'antd'
 import knowledgeBaseService from '@/services/knowledgeBaseService'
 
@@ -124,7 +123,6 @@ const DocumentListLayout: React.FC<DocumentListLayoutProps> = ({
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { } = useKnowledgeBaseContext();
 
   // Reset showDetail state when knowledge base name changes
   React.useEffect(() => {

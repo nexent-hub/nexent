@@ -35,30 +35,52 @@ const getHeaders = () => {
   };
 };
 
-/**
- * Generate System Prompt
- * @param params
- * @param savePrompt
- * @returns
- */
-export const generatePrompt = async (params: GeneratePromptParams, savePrompt: boolean = true): Promise<string> => {
+export const generatePromptStream = async (
+  params: GeneratePromptParams,
+  onData: (data: string) => void,
+  onError?: (err: any) => void,
+  onComplete?: () => void
+) => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.prompt.generate}?save_prompt=${savePrompt}`, {
+    const response = await fetch(API_ENDPOINTS.prompt.generate, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'AgentFrontEnd/1.0',
+      },
       body: JSON.stringify(params),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || '生成提示词失败');
-    }
+    if (!response.body) throw new Error('No response body');
 
-    const data = await response.json();
-    return data.data || '';
-  } catch (error) {
-    console.error('生成提示词失败:', error);
-    throw error;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let lines = buffer.split('\n\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const json = JSON.parse(line.replace('data: ', ''));
+            if (json.success) {
+              onData(json.data);
+            }
+          } catch (e) {
+            if (onError) onError(e);
+          }
+        }
+      }
+    }
+    if (onComplete) onComplete();
+  } catch (err) {
+    if (onError) onError(err);
+    if (onComplete) onComplete();
   }
 };
 

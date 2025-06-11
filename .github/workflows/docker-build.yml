@@ -1,46 +1,80 @@
-name: Docker Build
+name: Docker Build All Images
 
 on:
   workflow_dispatch:
     inputs:
-      build_type:
-        description: 'Build test'
+      runner_label_json:
+        description: 'JSON 格式的 runner 标签数组'
         required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - main
-          - data-process
+        default: '["self-hosted", "MacOS", "ARM64"]'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  checkout:
+    runs-on: ${{ fromJson(inputs.runner_label_json) }}
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Get commit SHA
+        id: get-sha
+        run: echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  build-base:
+    runs-on: ${{ fromJson(inputs.runner_label_json) }}
+    needs: checkout
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build base image
+        run: docker build --progress=plain -t nexent/nexent-base -f make/base/Dockerfile .
+
+  build-main:
+    runs-on: ${{ fromJson(inputs.runner_label_json) }}
+    needs: build-base
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Build main application image
-        if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'main' }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./make/main/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: false
-          load: true
-          tags: nexent/nexent:latest
+        run: docker build --progress=plain -t nexent/nexent -f make/main/Dockerfile .
+
+  build-data-process:
+    runs-on: ${{ fromJson(inputs.runner_label_json) }}
+    needs: checkout
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if model is cached locally
+        id: check-model
+        run: |
+          if [ -f ./model-assets/clip-vit-base-patch32/config.json ]; then
+            echo "cache-hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cache-hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clone model if not cached
+        if: steps.check-model.outputs.cache-hit == 'false'
+        run: |
+          mkdir -p ./model-assets
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/openai/clip-vit-base-patch32 ./model-assets/clip-vit-base-patch32
+          cd ./model-assets/clip-vit-base-patch32
+          GIT_TRACE=1 GIT_CURL_VERBOSE=1 GIT_LFS_LOG=debug git lfs pull
+          rm -rf .git flax_model.msgpack tf_model.h5
 
       - name: Build data process image
-        if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'data-process' }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./make/dataprocess/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: false
-          load: true
-          tags: nexent/nexent-data-process:latest 
+        run: docker build --progress=plain -t nexent/nexent-data-process -f make/data_process/Dockerfile .
+
+  build-web:
+    runs-on: ${{ fromJson(inputs.runner_label_json) }}
+    needs: checkout
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build web frontend image
+        run: docker build --progress=plain -t nexent/nexent-web -f make/web/Dockerfile . 

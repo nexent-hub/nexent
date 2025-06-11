@@ -155,6 +155,7 @@ class ToolInfo(TableBase):
     params = Column(JSON, doc="Tool parameter information (json)")
     inputs = Column(String(2048), doc="Prompt tool inputs description")
     output_type = Column(String(100), doc="Prompt tool output description")
+    is_available = Column(Boolean, doc="Whether the tool can be used under the current main service")
 
 class AgentInfo(TableBase):
     """

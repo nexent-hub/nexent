@@ -22,9 +22,6 @@ export default function CreatePage() {
 
   // Check the connection status when the page is initialized
   useEffect(() => {
-    // Check the connection status
-    checkModelEngineConnection()
-    
     // Trigger knowledge base data acquisition only when the page is initialized
     window.dispatchEvent(new CustomEvent('knowledgeBaseDataUpdated', {
       detail: { forceRefresh: true }
@@ -47,12 +44,8 @@ export default function CreatePage() {
       window.dispatchEvent(new CustomEvent('knowledgeBaseDataUpdated', {
         detail: { forceRefresh: true }
       }))
-      // When entering the second page, check the connection status
-      checkModelEngineConnection()
-    }else if (selectedKey === "1") {
-      // When entering the first page, check the connection status
-      checkModelEngineConnection()
     }
+    checkModelEngineConnection()
   }, [selectedKey])
 
   // Function to check the ModelEngine connection status

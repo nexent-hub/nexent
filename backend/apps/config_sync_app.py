@@ -183,27 +183,3 @@ async def load_config():
             content={"message": f"Failed to load configuration: {str(e)}", "status": "error"}
         )
 
-
-@router.get("/get_config/selected_knowledge_base")
-async def get_selected_knowledge_base():
-    """
-    Get the list of selected knowledge bases configured in environment variables
-    
-    Returns:
-        JSONResponse: List containing names of selected knowledge bases
-    """
-    try:
-        # Get selected knowledge base names from environment variables
-        kb_names_str = config_manager.get_config("SELECTED_KB_NAMES", "[]")
-        # Parse JSON string to Python list
-        kb_names = json.loads(kb_names_str)
-
-        return JSONResponse(
-            status_code=200,
-            content={"kb_names": kb_names}
-        )
-    except Exception as e:
-        return JSONResponse(
-            status_code=400,
-            content={"message": f"Failed to get knowledge base list: {str(e)}"}
-        )

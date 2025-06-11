@@ -217,7 +217,7 @@ export function ChatRightPanel({
     const source_type = result.source_type || "url";
 
     return (
-      <div className="p-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 transition-colors">
+      <div className="p-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 transition-colors overflow-hidden">
         <div className="flex flex-col">
           <div>
             {source_type === "url" ? (
@@ -226,13 +226,31 @@ export function ChatRightPanel({
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="font-medium text-blue-600 hover:underline block text-base"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'break-word'
+                }}
+                title={title}
               >
                 {title}
               </a>
             ) : (
-              <span className="font-medium block text-base">
+              <div 
+                className="font-medium text-base"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'break-word'
+                }}
+                title={title}
+              >
                 {title}
-              </span>
+              </div>
             )}
             
             {published_date && (
@@ -249,7 +267,7 @@ export function ChatRightPanel({
           </div>
 
           <div className="mt-2 text-sm flex justify-between items-center">
-            <div className="flex items-center min-w-0 flex-1">
+            <div className="flex items-center overflow-hidden" style={{flex: 1, minWidth: 0}}>
               <div className="w-3 h-3 flex-shrink-0 mr-1">
                 {source_type === "url" ? (
                   <ExternalLink className="w-full h-full" />
@@ -257,7 +275,14 @@ export function ChatRightPanel({
                   <Database className="w-full h-full" />
                 ) : null}
               </div>
-              <span className="text-gray-500 truncate">
+              <span 
+                className="text-gray-500 truncate"
+                style={{
+                  maxWidth: '75%',
+                  display: 'inline-block'
+                }}
+                title={formatUrl(result)}
+              >
                 {formatUrl(result)}
               </span>
             </div>
@@ -311,7 +336,7 @@ export function ChatRightPanel({
   return (
     <div className={`transition-all duration-300 ease-in-out ${
       isVisible ? 'lg:block w-[400px]' : 'lg:block w-0 opacity-0'
-    } hidden border-l bg-background relative`}>
+    } hidden border-l bg-background relative`} style={{maxWidth: '400px', overflow: 'hidden'}}>
       {/* Image viewer modal */}
       {viewingImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setViewingImage(null)}>
@@ -343,7 +368,7 @@ export function ChatRightPanel({
         </div>
       )}
 
-      <div className="flex-none sticky top-0 z-20 flex items-center justify-between border-b p-2 bg-gray-50">
+      <div className="flex-none sticky top-0 z-20 flex items-center justify-between border-b p-2 bg-gray-50" style={{maxWidth: '400px', overflow: 'hidden'}}>
         <div className="flex items-center space-x-1">
           <h3 className="text-sm font-semibold text-gray-800 pl-2">
             网页 · 知识库搜索 
@@ -363,8 +388,8 @@ export function ChatRightPanel({
         )}
       </div>
       
-        <Tabs defaultValue="sources">
-          <TabsList className="w-full">
+        <Tabs defaultValue="sources" style={{maxWidth: '400px', overflow: 'hidden'}}>
+          <TabsList className="w-full" style={{maxWidth: '400px'}}>
             <TabsTrigger value="sources" className="flex-1">
             来源 
             {searchResults.length > 0 && (
@@ -383,12 +408,12 @@ export function ChatRightPanel({
           </TabsTrigger>
         </TabsList>
 
-        <StaticScrollArea className="h-[calc(100vh-120px)]">
-        <TabsContent value="sources" className="p-4">
-          <div className="space-y-2">
+        <StaticScrollArea className="h-[calc(100vh-120px)]" style={{maxWidth: '400px', overflow: 'hidden'}}>
+        <TabsContent value="sources" className="p-4" style={{maxWidth: '400px', overflow: 'hidden'}}>
+          <div className="space-y-2" style={{maxWidth: '100%', overflow: 'hidden'}}>
             {searchResults.length > 0 ? (
               <>
-                <div className="space-y-3">
+                <div className="space-y-3" style={{maxWidth: '100%', overflow: 'hidden'}}>
                   {searchResults.map((result, index) => (
                     <SearchResultItem 
                       key={`result-${index}`} 
@@ -406,7 +431,7 @@ export function ChatRightPanel({
           </div>
         </TabsContent>
 
-        <TabsContent value="images" className="p-4">
+        <TabsContent value="images" className="p-4" style={{maxWidth: '400px', overflow: 'hidden'}}>
           {processedImages.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-2">

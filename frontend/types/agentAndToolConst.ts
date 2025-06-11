@@ -1,4 +1,3 @@
-
 export interface ToolParam {
     name: string
     type: string
@@ -15,6 +14,7 @@ export interface ToolParam {
     source: string
     params: ToolParam[]
     enable: boolean
+    is_available: boolean
   }
   
   export interface Agent {

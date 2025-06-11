@@ -1,3 +1,4 @@
+import re
 import logging
 from typing import List
 
@@ -314,6 +315,9 @@ def update_tool_table_from_scan_tool_list(tool_list: List[ToolInfo]):
             # get all existing tools (including complete information)
             existing_tools = session.query(ToolInfo).filter(ToolInfo.delete_flag != 'Y').all()
             existing_tool_dict = {f"{tool.name}&{tool.source}": tool for tool in existing_tools}
+            # set all tools to unavailable
+            for tool in existing_tools:
+                tool.is_available = False
 
             for tool in tool_list:
                 filtered_tool_data = filter_property(tool.__dict__, ToolInfo)
@@ -324,11 +328,16 @@ def update_tool_table_from_scan_tool_list(tool_list: List[ToolInfo]):
                     for key, value in filtered_tool_data.items():
                         setattr(existing_tool, key, value)
                     existing_tool.updated_by = user_id
+                    existing_tool.is_available = True
                 else:
                     # create new tool
-                    filtered_tool_data.update({"created_by": tenant_id, "updated_by": tenant_id, "author": tenant_id})
+                    
+                    # check if the tool name is valid
+                    is_available = True if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', tool.name) is not None else False
+                    filtered_tool_data.update({"created_by": tenant_id, "updated_by": tenant_id, "author": tenant_id, "is_available": is_available})
                     new_tool = ToolInfo(**filtered_tool_data)
                     session.add(new_tool)
+                    
 
             session.flush()
         logging.info("Updated tool table in PG database")
@@ -378,6 +387,7 @@ def add_tool_field(tool_info):
         tool_info["description"] = tool.description
         tool_info["source"] = tool.source
         tool_info["class_name"] = tool.class_name
+        tool_info["is_available"] = tool.is_available
         return tool_info
 
 def search_tools_for_sub_agent(agent_id, tenant_id, user_id: str = None):
@@ -398,3 +408,13 @@ def search_tools_for_sub_agent(agent_id, tenant_id, user_id: str = None):
 
             tools_list.append(new_tool_instance_dict)
         return tools_list
+
+def check_tool_is_available(tool_id_list: List[int]):
+    """
+    Check if the tool is available
+    """
+    with get_db_session() as session:
+        tools = session.query(ToolInfo).filter(ToolInfo.tool_id.in_(tool_id_list), ToolInfo.delete_flag != 'Y').all()
+        return [tool.is_available for tool in tools]
+    
+    

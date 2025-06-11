@@ -71,7 +71,7 @@ async def get_me_models(
 async def check_me_connectivity(timeout: int = Query(default=2, description="Timeout in seconds")):
     try:
         headers = {'Authorization': f'Bearer {MODEL_ENGINE_APIKEY}'}
-        
+
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=timeout),
             connector=aiohttp.TCPConnector(verify_ssl=False)

@@ -62,8 +62,7 @@ interface GuideStepsProps {
   selectedTools: any[];
   selectedAgents: any[];
   mainAgentId: string | null;
-  subAgentList: any[];
-  loadingAgents: boolean;
+  currentStep?: number;
 }
 
 export default function GuideSteps({
@@ -73,8 +72,7 @@ export default function GuideSteps({
   selectedTools,
   selectedAgents,
   mainAgentId,
-  subAgentList,
-  loadingAgents
+  currentStep,
 }: GuideStepsProps) {
   // print mainAgentId in the console
   useEffect(() => {
@@ -99,15 +97,16 @@ export default function GuideSteps({
     }
   };
 
+  // Use external currentStep if provided
+  const step = typeof currentStep === 'number' ? currentStep : getCurrentStep();
+
   return (
     <div className="h-[65vh]">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold">{isCreatingNewAgent ? '新建Agent' : '主Agent配置'}</h2>
-      </div>
       <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden">
+        <h2 className="text-xl font-bold mb-4">{isCreatingNewAgent ? '新建Agent' : '主Agent配置'}</h2>
         <Steps
           direction="vertical"
-          current={getCurrentStep()}
+          current={step}
           items={isCreatingNewAgent ? GUIDE_STEPS.creating : GUIDE_STEPS.normal}
           className="px-2 custom-guide-steps h-full"
         />

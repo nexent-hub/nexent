@@ -3,6 +3,8 @@ from typing import Optional, Any, List, Dict
 
 from pydantic import BaseModel, Field
 
+from nexent.core.agents.agent_model import ToolConfig
+
 
 class ModelConnectStatusEnum(Enum):
     """Enum class for model connection status"""
@@ -266,7 +268,7 @@ class AgentInfoRequest(BaseModel):
 
 class AgentIDRequest(BaseModel):
     agent_id: int
-    
+
 
 class ToolInstanceInfoRequest(BaseModel):
     tool_id: int
@@ -303,3 +305,21 @@ class ChangeSummaryRequest(BaseModel):
 class MessageIdRequest(BaseModel):
     conversation_id: int
     message_index: int
+
+
+class ExportAndImportAgentInfo(BaseModel):
+    name: str
+    description: str
+    business_description: str
+    model_name: str
+    max_steps: int
+    provide_run_summary: bool
+    prompt: str
+    enabled: bool
+    tools: List[ToolConfig]
+    managed_agents: List
+
+
+class AgentImportRequest(BaseModel):
+    agent_id: int
+    agent_info: ExportAndImportAgentInfo

@@ -18,9 +18,15 @@ interface MarkdownRendererProps {
 
 // Get background color for different tool signs
 const getBackgroundColor = (toolSign: string) => {
-  // Use unified blue background for numeric-only format
-  return '#e3f2fd';
-};
+  switch (toolSign) {
+    case 'a': return '#E3F2FD'; // 浅蓝色
+    case 'b': return '#E8F5E9'; // 浅绿色
+    case 'c': return '#FFF3E0'; // 浅橙色
+    case 'd': return '#F3E5F5'; // 浅紫色
+    case 'e': return '#FFEBEE'; // 浅红色
+    default: return '#E5E5E5'; // 默认浅灰色
+  }
+}
 
 // Replace the original LinkIcon component
 const CitationBadge = ({ toolSign, citeIndex }: { toolSign: string, citeIndex: number }) => (
@@ -74,8 +80,11 @@ const HoverableText = ({ text, searchResults }: {
   };
 
   // Find corresponding search result - simplified for numeric-only format
-  const citeIndex = parseInt(text);
-  const matchedResult = searchResults?.find(result => result.cite_index === citeIndex);
+  const toolSign = text.charAt(0);
+  const citeIndex = parseInt(text.slice(1))
+  const matchedResult = searchResults?.find(
+    result => result.tool_sign === toolSign && result.cite_index === citeIndex
+  );
 
   // Handle mouse events
   React.useEffect(() => {
@@ -198,7 +207,7 @@ const HoverableText = ({ text, searchResults }: {
         >
           <TooltipTrigger asChild>
             <span className="inline-flex items-center cursor-pointer transition-colors">
-              <CitationBadge toolSign="" citeIndex={citeIndex} />
+                <CitationBadge toolSign={toolSign} citeIndex={citeIndex} />
             </span>
           </TooltipTrigger>
           {/* Force Portal to body */}
@@ -291,17 +300,30 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       ...oneLight['pre[class*="language-"]'],
       background: '#f5f5f5', // Light gray background
       borderRadius: '4px',
-      padding: '12px',
-      margin: '8px 0',
-      fontSize: '1rem', // Adjust code block font size
-      lineHeight: '1.6' // Increase code block line spacing
+      padding: '8px 12px',
+      margin: '4px 0',
+      fontSize: '0.875rem', // Slightly smaller font size for better fit
+      lineHeight: '1.5', // Adjusted line height
+      whiteSpace: 'pre-wrap', // Allow wrapping of long lines
+      wordWrap: 'break-word', // Break long words
+      wordBreak: 'break-word', // Break long words
+      overflowWrap: 'break-word', // Break long words
+      overflow: 'auto', // Add scroll for extremely long content
+      maxWidth: '100%', // Ensure it doesn't exceed container width
+      boxSizing: 'border-box' // Include padding in width calculation
     },
     'code[class*="language-"]': {
       ...oneLight['code[class*="language-"]'],
       background: '#f5f5f5', // Light gray background
       color: '#333333', // Dark gray text for better readability
-      fontSize: '1rem', // Adjust code block font size
-      lineHeight: '1.6' // Increase code block line spacing
+      fontSize: '0.875rem', // Slightly smaller font size for better fit
+      lineHeight: '1.5', // Adjusted line height
+      whiteSpace: 'pre-wrap', // Allow wrapping of long lines
+      wordWrap: 'break-word', // Break long words
+      wordBreak: 'break-word', // Break long words
+      overflowWrap: 'break-word', // Break long words
+      maxWidth: '100%', // Ensure it doesn't exceed container width
+      padding: '0' // 移除code元素的内部padding
     }
   };
 
@@ -319,13 +341,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           const match = part.match(/^\[\[([^\]]+)\]\]$/);
           if (match) {
             const innerText = match[1];
-            
-            // Numeric format: [[1]], [[2]], [[3]]
-            const citeIndex = parseInt(innerText);
-            
-            // Check if matching search result exists
-            const hasMatch = searchResults?.some(result => result.cite_index === citeIndex);
-            
+
+            const toolSign = innerText.charAt(0);
+            const citeIndex = parseInt(innerText.slice(1));
+            const hasMatch = searchResults?.some(
+              result => result.tool_sign === toolSign && result.cite_index === citeIndex
+            );
+
             // Only show citation icon when matching search result is found
             if (hasMatch) {
               return <HoverableText key={index} text={innerText} searchResults={searchResults} />;
@@ -379,6 +401,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         .markdown-body li {
           display: list-item !important;
         }
+        .markdown-body p {
+          margin-bottom: 0.5rem !important;
+          margin-top: 0.25rem !important;
+        }
+        .user-paragraph {
+          margin-bottom: 0.25rem !important;
+          margin-top: 0.25rem !important;
+        }
       `}</style>
       <div className={`markdown-body ${className || ''}`}>
         <ReactMarkdown
@@ -403,7 +433,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   PreTag="div"
                   {...props}
                 >
-                  {String(children).replace(/\n$/, '')}
+                  {String(children).replace(/^\n+|\n+$/g, '')}
                 </SyntaxHighlighter>
               ) : (
                 <code {...props}>

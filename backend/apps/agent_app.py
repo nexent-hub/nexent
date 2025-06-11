@@ -4,9 +4,9 @@ from fastapi import HTTPException, APIRouter, Header, Request
 from fastapi.responses import StreamingResponse
 
 from agents.create_agent_info import create_agent_run_info
-from consts.model import AgentRequest, AgentInfoRequest, AgentIDRequest
+from consts.model import AgentRequest, AgentInfoRequest, AgentIDRequest, ConversationResponse, AgentImportRequest
 from services.agent_service import list_main_agent_info_impl, get_agent_info_impl, \
-    get_creating_sub_agent_info_impl, update_agent_info_impl, delete_agent_impl
+    get_creating_sub_agent_info_impl, update_agent_info_impl, delete_agent_impl, export_agent_impl, import_agent_impl
 from services.conversation_management_service import save_conversation_user, save_conversation_assistant
 from utils.config_utils import config_manager
 from utils.thread_utils import submit
@@ -23,13 +23,14 @@ logger = logging.getLogger("agent app")
 
 # Define API route
 @router.post("/run")
-async def agent_run_api(http_req: Request, request: AgentRequest, authorization: str = Header(None)):
+async def agent_run_api(request: AgentRequest, authorization: str = Header(None)):
     """
     Agent execution API endpoint
     """
     agent_run_info = await create_agent_run_info(agent_id=request.agent_id,
                                                  minio_files=request.minio_files,
-                                                 query=request.query)
+                                                 query=request.query,
+                                                 history=request.history)
     
     # Save user message only if not in debug mode and register agent run info
     if not request.is_debug:
@@ -137,4 +138,26 @@ async def delete_agent_api(request: AgentIDRequest):
         raise HTTPException(status_code=500, detail=f"Agent delete error: {str(e)}")
 
 
+@router.post("/export")
+async def export_agent_api(request: AgentIDRequest):
+    """
+    export an agent
+    """
+    try:
+        agent_info_str = await export_agent_impl(request.agent_id)
+        return ConversationResponse(code=0, message="success", data=agent_info_str)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent export error: {str(e)}")
 
+
+@router.post("/import")
+async def import_agent_api(request: AgentImportRequest):
+    """
+    import an agent
+    """
+    try:
+        import_agent_impl(request.agent_id, request.agent_info)
+        return {}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent import error: {str(e)}")
+    

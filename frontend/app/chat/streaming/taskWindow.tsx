@@ -47,7 +47,7 @@ const messageHandlers: MessageHandler[] = [
           color: "#6b7280",
           fontWeight: 500,
           borderRadius: "0.25rem",
-          paddingTop: "0.2rem"
+          paddingTop: "0.5rem"
         }}>
           <span>{message.content}</span>
         </div>
@@ -163,7 +163,7 @@ const messageHandlers: MessageHandler[] = [
               fontSize: "0.875rem",
               color: "#6b7280",
               fontWeight: 500,
-              paddingTop: "0.15rem"
+              paddingTop: "0.5rem"
             }}>
               阅读检索结果
             </div>
@@ -463,7 +463,7 @@ const messageHandlers: MessageHandler[] = [
               fontSize: "0.875rem",
               color: "#6b7280",
               fontWeight: 500,
-              paddingTop: "0.15rem"
+              paddingTop: "0.5rem"
             }}>
               阅读检索结果
             </div>
@@ -595,7 +595,7 @@ const messageHandlers: MessageHandler[] = [
         color: "#dc2626",
         fontWeight: 500,
         borderRadius: "0.25rem",
-        paddingTop: "0.2rem"
+        paddingTop: "0.5rem"
       }}>
         <span>{message.content}</span>
       </div>
@@ -645,7 +645,22 @@ export function TaskWindow({
   const [contentHeight, setContentHeight] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
   
+  // Add new refs for dynamic threshold calculation
+  const prevContentHeightRef = useRef(0)
+  const lastScrollTimeRef = useRef(Date.now())
+  
   const { hasMessages, hasVisibleMessages, groupedMessages } = useChatTaskMessage(messages as ChatMessageType[]);
+
+  // The function of scrolling to the bottom - defined early to avoid hoisting issues
+  const scrollToBottom = () => {
+    const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollAreaElement) return;
+    
+    // Use requestAnimationFrame to optimize performance
+    requestAnimationFrame(() => {
+      (scrollAreaElement as HTMLElement).scrollTop = (scrollAreaElement as HTMLElement).scrollHeight;
+    });
+  };
 
   // calculate the content height
   useEffect(() => {
@@ -655,31 +670,76 @@ export function TaskWindow({
     }
   }, [isExpanded, groupedMessages, messages])
 
-  // The logic of automatically scrolling to the bottom
-  useEffect(() => {
-    if (autoScroll && isStreaming) {
-      scrollToBottom();
+  // Dynamic threshold calculation based on content growth
+  const calculateDynamicThreshold = (baseThreshold: number) => {
+    const contentGrowth = contentHeight - prevContentHeightRef.current;
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastScrollTimeRef.current;
+    
+    // If content grew significantly (more than 200px) in a short time (less than 1 second)
+    if (contentGrowth > 200 && timeDiff < 1000) {
+      // Increase threshold proportionally to content growth, but cap it at reasonable limits
+      const dynamicThreshold = Math.min(baseThreshold + contentGrowth * 0.8, 400);
+      return dynamicThreshold;
     }
-  }, [messages, autoScroll, isStreaming]);
+    
+    // If content grew moderately (50-200px)
+    if (contentGrowth > 50) {
+      const dynamicThreshold = Math.min(baseThreshold + contentGrowth * 0.5, 250);
+      return dynamicThreshold;
+    }
+    
+    return baseThreshold;
+  };
 
-  // Listen for message changes and automatically scroll to the bottom
+  // Listen for message changes and automatically scroll to the bottom (only when user allows it)
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && autoScroll) {
       const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (!scrollAreaElement) return;
 
       const { scrollTop, scrollHeight, clientHeight } = scrollAreaElement as HTMLElement;
       const distanceToBottom = scrollHeight - scrollTop - clientHeight;
       
-      // If the user is already at the bottom or is streaming, automatically scroll
-      if (distanceToBottom < 100 || isStreaming) {
+      // Use dynamic threshold for auto-scroll
+      const dynamicThreshold = calculateDynamicThreshold(150);
+      
+      // Only auto-scroll if user is near the bottom (within dynamic threshold)
+      if (distanceToBottom < dynamicThreshold) {
         // Use requestAnimationFrame to avoid too frequent updates
         requestAnimationFrame(() => {
           scrollToBottom();
         });
       }
+      
+      // Update tracking refs after scroll decision
+      prevContentHeightRef.current = contentHeight;
+      lastScrollTimeRef.current = Date.now();
     }
-  }, [messages.length, isExpanded, isStreaming]);
+  }, [messages.length, isExpanded, autoScroll, contentHeight]);
+
+  // Auto-scroll during streaming when user allows it
+  useEffect(() => {
+    if (autoScroll && isStreaming && isExpanded) {
+      const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (!scrollAreaElement) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollAreaElement as HTMLElement;
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+      
+      // Use dynamic threshold for streaming auto-scroll (more sensitive base threshold)
+      const dynamicThreshold = calculateDynamicThreshold(50);
+      
+      // Only auto-scroll during streaming if user is near the bottom (within dynamic threshold)
+      if (distanceToBottom < dynamicThreshold) {
+        scrollToBottom();
+      }
+      
+      // Update tracking refs after scroll decision
+      prevContentHeightRef.current = contentHeight;
+      lastScrollTimeRef.current = Date.now();
+    }
+  }, [messages, autoScroll, isStreaming, isExpanded, contentHeight]);
 
   // Handle the scrolling event of the scroll area
   useEffect(() => {
@@ -691,11 +751,11 @@ export function TaskWindow({
       const { scrollTop, scrollHeight, clientHeight } = scrollAreaElement as HTMLElement;
       const distanceToBottom = scrollHeight - scrollTop - clientHeight;
       
-      // If the distance to the bottom is less than 20px, it is considered that the user has scrolled to the bottom, and enable automatic scrolling
-      if (distanceToBottom < 20) {
+      // If the distance to the bottom is less than 50px, it is considered that the user has scrolled to the bottom, and enable automatic scrolling
+      if (distanceToBottom < 50) {
         setAutoScroll(true);
-      } else if (distanceToBottom > 30) { 
-        // If the distance to the bottom is greater than 30px, and it is user-initiated scrolling, disable automatic scrolling
+      } else if (distanceToBottom > 80) { 
+        // If the distance to the bottom is greater than 80px, and it is user-initiated scrolling, disable automatic scrolling
         setAutoScroll(false);
       }
     };
@@ -720,17 +780,6 @@ export function TaskWindow({
       }
     }
   }, [messages, isStreaming]);
-
-  // The function of scrolling to the bottom
-  const scrollToBottom = () => {
-    const scrollAreaElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!scrollAreaElement) return;
-    
-    // Use requestAnimationFrame to optimize performance
-    requestAnimationFrame(() => {
-      (scrollAreaElement as HTMLElement).scrollTop = (scrollAreaElement as HTMLElement).scrollHeight;
-    });
-  };
 
   // Use the processor to render the message content
   const renderMessageContent = (message: any) => {
@@ -778,10 +827,8 @@ export function TaskWindow({
     }
 
     return (
-      <div className="relative pl-3">
-        {groupedMessages.length > 1 && (
-          <div className="absolute left-1.5 top-[0.65rem] bottom-[0.65rem] w-0.5 bg-gray-200"></div>
-        )}
+      <div className="relative">
+        <div className="absolute left-[0.2rem] top-[1.25rem] bottom-0 w-0.5 bg-gray-200"></div>
 
         {groupedMessages.map((group, groupIndex) => {
           const message = group.message;
@@ -789,37 +836,40 @@ export function TaskWindow({
           
           return (
             <div key={message.id || groupIndex} className="relative mb-5">
-              {/* Dot - add blinking effect based on condition */}
-              <div className="absolute left-[-9px] top-[0.55rem]">
-                <div 
-                  className={isBlinking ? "blinkingDot" : ""}
-                  style={isBlinking ? {
-                    width: "0.5rem",
-                    height: "0.5rem",
-                    borderRadius: "9999px"
-                  } : {
-                    width: "0.5rem",
-                    height: "0.5rem",
-                    borderRadius: "9999px",
-                    backgroundColor: message.type === "virtual" ? "transparent" : "#9ca3af"
-                  }}
-                ></div>
-              </div>
-              
-              {/* Message content */}
-              <div className="ml-3 text-sm break-words">
-                {renderMessageContent(message)}
+              {/* 使用flex布局确保圆点与文本内容对齐 */}
+              <div className="flex items-start">
+                {/* 圆点容器 */}
+                <div className="flex-shrink-0 mr-3" style={{ position: "relative", top: "0.95rem" }}>
+                  <div 
+                    className={isBlinking ? "blinkingDot" : ""}
+                    style={isBlinking ? {
+                      width: "0.5rem",
+                      height: "0.5rem",
+                      borderRadius: "9999px"
+                    } : {
+                      width: "0.5rem",
+                      height: "0.5rem",
+                      borderRadius: "9999px",
+                      backgroundColor: message.type === "virtual" ? "transparent" : "#9ca3af"
+                    }}
+                  ></div>
+                </div>
                 
-                {/* Render card messages */}
-                {group.cards.length > 0 && (
-                  <div className="mt-2">
-                    {group.cards.map((card, cardIndex) => (
-                      <div key={`card-${cardIndex}`} className="ml-0">
-                        {renderMessageContent(card)}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* 消息内容 */}
+                <div className="flex-1 text-sm break-words min-w-0">
+                  {renderMessageContent(message)}
+                  
+                  {/* Render card messages */}
+                  {group.cards.length > 0 && (
+                    <div className="mt-2">
+                      {group.cards.map((card, cardIndex) => (
+                        <div key={`card-${cardIndex}`} className="ml-0">
+                          {renderMessageContent(card)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -830,9 +880,9 @@ export function TaskWindow({
 
   // 计算容器高度：内容高度 + header高度，但不超过最大高度
   const maxHeight = 300
-  const headerHeight = 40
+  const headerHeight = 55
   const availableHeight = maxHeight - headerHeight
-  const actualContentHeight = Math.min(contentHeight + 16, availableHeight) // +16 for padding
+  const actualContentHeight = Math.min(contentHeight + 16, availableHeight)
   const containerHeight = isExpanded ? headerHeight + actualContentHeight : 'auto'
   const needsScroll = contentHeight + 16 > availableHeight
 
@@ -864,12 +914,12 @@ export function TaskWindow({
           <div className="px-4" style={{ height: `${actualContentHeight}px` }}>
             {needsScroll ? (
               <ScrollArea className="h-full" ref={scrollAreaRef}>
-                <div className="pb-2" ref={contentRef}>
+                <div className="" ref={contentRef}>
                   {renderMessages()}
                 </div>
               </ScrollArea>
             ) : (
-              <div className="pb-2" ref={contentRef}>
+              <div className="" ref={contentRef}>
                 {renderMessages()}
               </div>
             )}
@@ -888,6 +938,69 @@ export function TaskWindow({
           animation: blinkingDot 1.5s infinite ease-in-out;
           background-color: rgba(79, 70, 229, 1);
           box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+        }
+        
+        /* For the code block style in task-message-content */
+        .task-message-content pre {
+          white-space: pre-wrap !important;
+          word-wrap: break-word !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          overflow: auto !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 6px 10px !important;
+          margin: 2px 0 !important;
+        }
+        
+        .task-message-content code {
+          white-space: pre-wrap !important;
+          word-wrap: break-word !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+          padding: 0 !important;
+        }
+        
+        .task-message-content div[class*="language-"] {
+          white-space: pre-wrap !important;
+          word-wrap: break-word !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          overflow: auto !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 6px 10px !important;
+          margin: 2px 0 !important;
+        }
+        
+        /* Ensure the content of the SyntaxHighlighter component wraps correctly */
+        .task-message-content .react-syntax-highlighter-line-number {
+          white-space: nowrap !important;
+        }
+        
+        /* Make sure the entire container is not stretched by the content */
+        .task-message-content {
+          overflow: hidden !important;
+          max-width: 100% !important;
+          word-wrap: break-word !important;
+          word-break: break-word !important;
+        }
+        
+        .task-message-content * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Paragraph spacing adjustment */
+        .task-message-content p {
+          margin-bottom: 0.5rem !important;
+          margin-top: 0.25rem !important;
+        }
+        
+        .task-message-content .markdown-body p {
+          margin-bottom: 0.5rem !important;
+          margin-top: 0.25rem !important;
         }
       `}</style>
     </>

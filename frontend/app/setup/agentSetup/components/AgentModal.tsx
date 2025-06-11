@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scrollArea'
 import ToolConfigModal from './ToolConfigModal'
 import { AgentModalProps, Tool, OpenAIModel, Agent } from '../ConstInterface'
 import { handleToolSelectCommon } from '../utils/toolUtils'
-import { updateAgent, deleteAgent } from '@/services/agentConfigService'
+import { updateAgent, deleteAgent, exportAgent } from '@/services/agentConfigService'
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -300,6 +300,58 @@ export default function AgentModal({
     }
   };
 
+  const handleExport = async () => {
+    if (!agentId) {
+      message.error('Agent ID 不存在');
+      return;
+    }
+
+    try {
+      const result = await exportAgent(parseInt(agentId));
+      if (result.success && result.data) {
+        // 处理JSON数据
+        let jsonContent;
+        if (typeof result.data === 'string') {
+          // 如果后端返回的已经是JSON字符串，尝试解析并重新格式化
+          try {
+            const parsedData = JSON.parse(result.data);
+            jsonContent = JSON.stringify(parsedData, null, 2);
+          } catch (e) {
+            // 如果解析失败，直接使用原字符串
+            jsonContent = result.data;
+          }
+        } else {
+          // 如果是对象，转换为格式化的JSON字符串
+          jsonContent = JSON.stringify(result.data, null, 2);
+        }
+        
+        // 创建Blob对象
+        const blob = new Blob([jsonContent], { type: 'application/json' });
+        
+        // 创建下载链接
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `agent_${name}_config.json`;
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        
+        // 清理
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        message.success('Agent 配置导出成功');
+      } else {
+        message.error(result.message || '导出失败');
+      }
+    } catch (error) {
+      console.error('导出 Agent 失败:', error);
+      message.error('导出失败，请稍后重试');
+    }
+  };
+
   return (
     <div>
       <Modal
@@ -319,7 +371,7 @@ export default function AgentModal({
           </div>
         ) : (
           <div className="flex justify-between">
-            <div>
+            <div className="flex gap-2">
               <button 
                 key="delete" 
                 onClick={() => setIsDeleteConfirmOpen(true)}
@@ -327,6 +379,14 @@ export default function AgentModal({
                 style={{ border: "none" }}
               >
                 删除Agent
+              </button>
+              <button 
+                key="export" 
+                onClick={handleExport}
+                className="px-4 py-1.5 rounded-md flex items-center justify-center text-sm bg-green-50 text-green-600 hover:bg-green-100"
+                style={{ border: "none" }}
+              >
+                导出Agent
               </button>
             </div>
             <div className="flex gap-2">
@@ -385,15 +445,24 @@ export default function AgentModal({
                 <div className="border rounded-md p-3 bg-gray-50 min-h-[80px] text-sm">
                   {currentTools.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {currentTools.map(tool => (
-                        <div 
-                          key={tool.id} 
-                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center cursor-pointer hover:bg-blue-200"
-                          onClick={() => !readOnly && handleConfigClick(tool)}
-                        >
-                          {tool.name}
-                        </div>
-                      ))}
+                      {currentTools.map(tool => {
+                        const isAvailable = tool.is_available !== false; // 默认为true，只有明确为false时才不可用
+                        return (
+                          <div 
+                            key={tool.id} 
+                            className={`px-2 py-1 rounded-md text-xs flex items-center cursor-pointer transition-colors ${
+                              isAvailable 
+                                ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300 border border-gray-300'
+                            }`}
+                            title={!isAvailable ? '工具不可用，但可以查看配置' : undefined}
+                            onClick={() => !readOnly && handleConfigClick(tool)}
+                          >
+                            {tool.name}
+                            {!isAvailable && <span className="ml-1 text-red-500">(不可用)</span>}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <Text className="text-gray-400">未选择任何工具</Text>

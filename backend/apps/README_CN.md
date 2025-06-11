@@ -134,16 +134,6 @@
 }
 ```
 
-#### GET /api/config/get_config/selected_knowledge_base
-获取已选择的知识库列表。
-
-**响应：**
-```json
-{
-    "kb_names": ["string"]
-}
-```
-
 ## 会话管理应用
 
 ### 端点

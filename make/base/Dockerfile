@@ -1,4 +1,4 @@
-FROM hub.rat.dev/python:3.10.16
+FROM python:3.10.16
 LABEL authors="nexent"
 
 # Set correct permissions as root

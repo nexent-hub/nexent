@@ -21,6 +21,8 @@ export const API_ENDPOINTS = {
     delete: `${API_BASE_URL}/agent`,
     getCreatingSubAgentId: `${API_BASE_URL}/agent/get_creating_sub_agent_id`,
     stop: (conversationId: number) => `${API_BASE_URL}/agent/stop/${conversationId}`,
+    export: `${API_BASE_URL}/agent/export`,
+    import: `${API_BASE_URL}/agent/import`,
   },
   tool: {
     list: `${API_BASE_URL}/tool/list`,

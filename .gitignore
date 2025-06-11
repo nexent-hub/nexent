@@ -21,6 +21,7 @@ docker/.env
 frontend_standalone/
 
 backend/assets/clip-vit-base-patch32
+model-assets
 
 # Test coverage reports
 test/coverage_html/

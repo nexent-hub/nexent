@@ -134,9 +134,7 @@ export const ModelConfigSection = forwardRef<ModelConfigSectionRef, ModelConfigS
     const fetchData = async () => {
       await configService.loadConfigToFrontend();
       await configStore.reloadFromStorage();
-      await loadModelLists(true);  // Skip verification when initializing
-      console.log('modelConfig', modelConfig)
-      console.log('selectedModels', selectedModels)
+      await loadModelLists(true);
     };
 
     fetchData();
@@ -507,7 +505,6 @@ export const ModelConfigSection = forwardRef<ModelConfigSectionRef, ModelConfigS
   const handleSyncModels = async () => {
     setIsSyncing(true)
     try {
-      await modelService.syncModels()
       await loadModelLists(true)
       message.success('模型同步成功')
     } catch (error) {

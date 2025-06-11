@@ -1,6 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock, call
-from fastapi import HTTPException
+from unittest.mock import patch, MagicMock
 
 # Mock boto3 and minio client before importing the module under test
 import sys
@@ -14,7 +13,6 @@ with patch('backend.database.client.MinioClient', return_value=minio_client_mock
         get_enable_tool_id_by_agent_id,
         get_enable_sub_agent_id_by_agent_id,
         get_creating_sub_agent_id_service,
-        query_or_create_main_agents_api,
         query_sub_agents_api,
         list_main_agent_info_impl,
         get_agent_info_impl,
@@ -124,21 +122,6 @@ class TestAgentService(unittest.TestCase):
             tenant_id="test_tenant",
             user_id="test_user"
         )
-
-    @patch('backend.services.agent_service.query_or_create_main_agent_id')
-    def test_query_or_create_main_agents_api(self, mock_query):
-        # Setup
-        mock_query.return_value = 999
-        
-        # Execute
-        result = query_or_create_main_agents_api(
-            tenant_id="test_tenant", 
-            user_id="test_user"
-        )
-        
-        # Assert
-        self.assertEqual(result, 999)
-        mock_query.assert_called_once_with("test_tenant", user_id="test_user")
 
     @patch('backend.services.agent_service.search_tools_for_sub_agent')
     @patch('backend.services.agent_service.query_sub_agents')

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 
-import { message, Button } from 'antd'
+import { message } from 'antd'
 import { InfoCircleFilled } from '@ant-design/icons'
 
 // Import AppProvider and hooks
@@ -17,10 +17,11 @@ import knowledgeBasePollingService from '@/services/knowledgeBasePollingService'
 
 // Import new components
 import KnowledgeBaseList from './knowledgeBase/KnowledgeBaseList'
-
 import DocumentList from './document/DocumentListContainer'
-
 import ConfirmModal from './components/ConfirmModal'
+
+// Layout Height Constant Configuration (shared with AgentConfig)
+export const MAIN_CONTENT_HEIGHT = '72.5vh';
 
 // EmptyState component defined directly in this file
 interface EmptyStateProps {
@@ -82,7 +83,6 @@ function DataConfig() {
     isKnowledgeBaseSelectable,
     refreshKnowledgeBaseData,
     summaryIndex,
-    changeSummary
   } = useKnowledgeBaseContext();
 
   const {
@@ -95,9 +95,6 @@ function DataConfig() {
   const {
     state: uiState,
     setDragging,
-    toggleCreateModal,
-    toggleDocModal,
-    showNotification
   } = useUIContext();
 
   // Create mode state
@@ -105,8 +102,6 @@ function DataConfig() {
   const [newKbName, setNewKbName] = useState("");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [hasClickedUpload, setHasClickedUpload] = useState(false);
-  const [hasShownNameError, setHasShownNameError] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
 
   // 添加监听选中新知识库的事件
   useEffect(() => {
@@ -126,12 +121,6 @@ function DataConfig() {
       window.removeEventListener('selectNewKnowledgeBase', handleSelectNewKnowledgeBase as EventListener);
     };
   }, [kbState.knowledgeBases, setActiveKnowledgeBase, fetchDocuments, setIsCreatingMode, setHasClickedUpload]);
-
-  // UI configuration variables
-  const UI_CONFIG = {
-    CREATE_BUTTON_HEIGHT: '50px',                // 创建知识库按钮高度
-    CONTAINER_HEIGHT: '75.6vh'                     // 容器整体高度
-  };
 
   // Generate unique knowledge base name
   const generateUniqueKbName = (existingKbs: KnowledgeBase[]): string => {
@@ -321,7 +310,6 @@ function DataConfig() {
 
         if (nameExists) {
           message.error(`知识库名称"${newKbName.trim()}"已存在，请更换名称`);
-          setHasShownNameError(true);
           setHasClickedUpload(false); // 重置上传按钮点击状态，允许用户修改名称
           return; // 如果名称重复，直接返回，不继续执行后续逻辑
         }
@@ -351,7 +339,6 @@ function DataConfig() {
         // 退出创建模式，防止用户修改知识库名称
         setIsCreatingMode(false);
         setHasClickedUpload(false); // 重置上传状态
-        setHasShownNameError(false); // 重置错误状态
         
         // 使用轮询服务等待知识库创建完成并监控文档处理状态
         knowledgeBasePollingService.waitForKnowledgeBaseCreation(
@@ -481,9 +468,8 @@ function DataConfig() {
       return;
     }
 
-    setIsSummarizing(true);
     try {
-      const summary = await summaryIndex(viewingKbName);
+      const summary = await summaryIndex(viewingKbName, 10);
       // Here you can process the returned summary content based on actual needs
       // For example display in dialog or update to some state
       message.success('知识库总结完成');
@@ -492,7 +478,6 @@ function DataConfig() {
       message.error('获取知识库总结失败');
       console.error('获取知识库总结失败:', error);
     } finally {
-      setIsSummarizing(false);
     }
   };
 
@@ -518,14 +503,13 @@ function DataConfig() {
   return (
     <>
       <div 
-        className="flex h-full mb-4"
-        style={{ height: UI_CONFIG.CONTAINER_HEIGHT }}
+        className="flex h-full pl-[16px] pr-[2px]"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {/* Left knowledge base list - occupies 1/3 space */}
-        <div className="w-1/3 p-3 pr-1.5">
+        <div className="w-1/3 pr-3">
           <KnowledgeBaseList
             knowledgeBases={kbState.knowledgeBases}
             selectedIds={kbState.selectedIds}
@@ -539,68 +523,76 @@ function DataConfig() {
             onCreateNew={handleCreateNew}
             isSelectable={isKnowledgeBaseSelectable}
             getModelDisplayName={(modelId) => modelId}
-            containerHeight={UI_CONFIG.CONTAINER_HEIGHT}
+            containerHeight={MAIN_CONTENT_HEIGHT}
             onKnowledgeBaseChange={() => {}} // No need to trigger repeatedly here as it's already handled in handleKnowledgeBaseClick
           />
         </div>
         
-        {/* Right content area - occupies 2/3 space */}
-        <div className="w-2/3 p-3 pl-1.5 flex flex-col h-full">
-          {isCreatingMode ? (
-            <DocumentList
-              documents={[]}
-              onDelete={() => {}}
-              isCreatingMode={true}
-              knowledgeBaseName={newKbName}
-              onNameChange={setNewKbName}
-              containerHeight={UI_CONFIG.CONTAINER_HEIGHT}
-              hasDocuments={hasClickedUpload || docState.isUploading}
-              // Upload related props
-              isDragging={uiState.isDragging}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onFileSelect={handleFileSelect}
-              selectedFiles={uploadFiles}
-              onUpload={() => handleFileUpload()}
-              isUploading={docState.isUploading}
-            />
-          ) : kbState.activeKnowledgeBase ? (
-            <DocumentList
-              documents={viewingDocuments}
-              onDelete={handleDeleteDocument}
-              knowledgeBaseName={viewingKbName}
-              loading={docState.loadingKbIds.has(kbState.activeKnowledgeBase.id)}
-              modelMismatch={!isKnowledgeBaseSelectable(kbState.activeKnowledgeBase)}
-              currentModel={kbState.currentEmbeddingModel || ''}
-              knowledgeBaseModel={kbState.activeKnowledgeBase.embeddingModel}
-              embeddingModelInfo={
-                !isKnowledgeBaseSelectable(kbState.activeKnowledgeBase) ? 
-                `当前模型${kbState.currentEmbeddingModel || ''}与知识库模型${kbState.activeKnowledgeBase.embeddingModel}不匹配，无法使用` : 
-                undefined
-              }
-              containerHeight={UI_CONFIG.CONTAINER_HEIGHT}
-              hasDocuments={viewingDocuments.length > 0}
-              // Upload related props
-              isDragging={uiState.isDragging}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onFileSelect={handleFileSelect}
-              selectedFiles={uploadFiles}
-              onUpload={() => handleFileUpload()}
-              isUploading={docState.isUploading}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full border border-gray-200 rounded-md bg-white h-full">
-              <EmptyState
-                title="未选择知识库"
-                description="请在左侧列表选择一个知识库，或创建新的知识库"
-                icon={<InfoCircleFilled style={{ fontSize: 36, color: '#1677ff' }} />}
-                containerHeight={UI_CONFIG.CONTAINER_HEIGHT}
-              />
+        {/* Right content area - occupies 2/3 space, now unified with config.tsx style */}
+        <div className="w-2/3 pr-3.5 flex flex-col h-full">
+          <div className="bg-white border border-gray-200 rounded-md flex flex-col overflow-hidden p-4">
+            <div style={{
+              background: "#fff",
+              overflowY: "auto",
+              overflowX: "hidden"
+            }}>
+              {isCreatingMode ? (
+                <DocumentList
+                  documents={[]}
+                  onDelete={() => {}}
+                  isCreatingMode={true}
+                  knowledgeBaseName={newKbName}
+                  onNameChange={setNewKbName}
+                  containerHeight={MAIN_CONTENT_HEIGHT}
+                  hasDocuments={hasClickedUpload || docState.isUploading}
+                  // Upload related props
+                  isDragging={uiState.isDragging}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onFileSelect={handleFileSelect}
+                  selectedFiles={uploadFiles}
+                  onUpload={() => handleFileUpload()}
+                  isUploading={docState.isUploading}
+                />
+              ) : kbState.activeKnowledgeBase ? (
+                <DocumentList
+                  documents={viewingDocuments}
+                  onDelete={handleDeleteDocument}
+                  knowledgeBaseName={viewingKbName}
+                  loading={docState.loadingKbIds.has(kbState.activeKnowledgeBase.id)}
+                  modelMismatch={!isKnowledgeBaseSelectable(kbState.activeKnowledgeBase)}
+                  currentModel={kbState.currentEmbeddingModel || ''}
+                  knowledgeBaseModel={kbState.activeKnowledgeBase.embeddingModel}
+                  embeddingModelInfo={
+                    !isKnowledgeBaseSelectable(kbState.activeKnowledgeBase) ?
+                    `当前模型${kbState.currentEmbeddingModel || ''}与知识库模型${kbState.activeKnowledgeBase.embeddingModel}不匹配，无法使用` :
+                    undefined
+                  }
+                  containerHeight={MAIN_CONTENT_HEIGHT}
+                  hasDocuments={viewingDocuments.length > 0}
+                  // Upload related props
+                  isDragging={uiState.isDragging}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onFileSelect={handleFileSelect}
+                  selectedFiles={uploadFiles}
+                  onUpload={() => handleFileUpload()}
+                  isUploading={docState.isUploading}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <EmptyState
+                    title="未选择知识库"
+                    description="请在左侧列表选择一个知识库，或创建新的知识库"
+                    icon={<InfoCircleFilled style={{ fontSize: 36, color: '#1677ff' }} />}
+                    containerHeight={MAIN_CONTENT_HEIGHT}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>

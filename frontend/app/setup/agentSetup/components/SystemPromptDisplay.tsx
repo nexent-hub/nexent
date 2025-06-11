@@ -1,9 +1,9 @@
 "use client"
 
-import { Input, Modal, Spin, message } from 'antd'
+import { Modal, message } from 'antd'
 import { useState, useRef, useEffect } from 'react'
 import AdditionalRequestInput from './AdditionalRequestInput'
-import { generatePrompt, fineTunePrompt, savePrompt } from '@/services/promptService'
+import { fineTunePrompt, savePrompt } from '@/services/promptService'
 
 // Milkdown imports
 import { MilkdownProvider, Milkdown, useEditor } from '@milkdown/react'
@@ -16,12 +16,9 @@ import './milkdown-nord.css'
 // System prompt display component Props interface
 export interface SystemPromptDisplayProps {
   prompt: string;
-  isGenerating: boolean;
   onPromptChange: (value: string) => void;
   onDebug?: () => void;
   agentId?: number;
-  taskDescription?: string;
-  onLocalIsGeneratingChange?: (value: boolean) => void;
 }
 
 // Milkdown Editor Component
@@ -62,63 +59,22 @@ const PromptEditor = ({ value, onChange, placeholder }: {
  */
 export default function SystemPromptDisplay({ 
   prompt, 
-  isGenerating, 
   onPromptChange,
   onDebug, 
   agentId, 
-  taskDescription,
-  onLocalIsGeneratingChange
 }: SystemPromptDisplayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [tunedPrompt, setTunedPrompt] = useState("")
   const [isTuning, setIsTuning] = useState(false)
-  const [localIsGenerating, setLocalIsGenerating] = useState(false)
   const originalPromptRef = useRef(prompt)
   const [localPrompt, setLocalPrompt] = useState(prompt);
 
-  useEffect(() => { setLocalPrompt(prompt); }, [prompt]);
-
-  // Use API to generate system prompt
-  const handleGenerateWithApi = async () => {
-    if (!taskDescription || taskDescription.trim() === '') {
-      message.warning("请先输入业务描述");
-      return;
+  useEffect(() => { 
+    setLocalPrompt(prompt); 
+    if (originalPromptRef.current === "" && prompt) {
+      originalPromptRef.current = prompt;
     }
-    
-    if (!agentId) {
-      message.warning("无法生成提示词：未指定Agent ID");
-      return;
-    }
-    
-    try {
-      setLocalIsGenerating(true);
-      console.log("onLocalIsGeneratingChange value:", onLocalIsGeneratingChange);
-      onLocalIsGeneratingChange?.(true);
-      console.log("开始调用API生成提示词", { agent_id: agentId, task_description: taskDescription });
-      
-      const result = await generatePrompt({
-        agent_id: agentId,
-        task_description: taskDescription
-      });
-      
-      console.log("API返回结果", result);
-      
-      onPromptChange(result);
-      message.success("提示词生成成功");
-    } catch (error) {
-      console.error("生成提示词失败:", error);
-      message.error(`生成提示词失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    } finally {
-      setLocalIsGenerating(false);
-      onLocalIsGeneratingChange?.(false);
-    }
-  };
-  
-  // Handle generate button click
-  const handleGenerate = async () => {
-    // Only use API call method
-    await handleGenerateWithApi();
-  };
+  }, [prompt]);
 
   // Handle fine-tuning request
   const handleSendAdditionalRequest = async (request: string) => {
@@ -194,14 +150,6 @@ export default function SystemPromptDisplay({
         <h2 className="text-lg font-medium">系统提示词</h2>
         <div className="flex gap-2">
           <button
-            onClick={handleGenerate}
-            disabled={isGenerating || localIsGenerating}
-            className="px-4 py-1.5 rounded-md flex items-center text-sm bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ border: "none" }}
-          >
-            {(isGenerating || localIsGenerating) ? "生成中..." : "生成"}
-          </button>
-          <button
             onClick={handleSavePrompt}
             disabled={!agentId || localPrompt === originalPromptRef.current}
             className="px-4 py-1.5 rounded-md flex items-center text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -233,7 +181,6 @@ export default function SystemPromptDisplay({
           <PromptEditor
             value={prompt}
             onChange={setLocalPrompt}
-            placeholder={isGenerating || localIsGenerating ? "正在生成系统提示词..." : "系统提示词将在这里显示..."}
           />
         </MilkdownProvider>
       </div>

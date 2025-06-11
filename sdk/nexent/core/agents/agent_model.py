@@ -20,7 +20,6 @@ class ToolConfig(BaseModel):
     source: str = Field(description="工具来源，可选local or mcp")
     metadata: Optional[Dict[str, Any]] = Field(description="元数据", default=None)
 
-
 class AgentConfig(BaseModel):
     name: str = Field(description="Agent名称")
     description: str = Field(description="Agent描述")

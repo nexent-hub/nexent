@@ -1,6 +1,6 @@
 "use client"
 
-import { ModelOption, ModelType, SingleModelConfig, ModelConnectStatus } from '../types/config'
+import { ModelOption, ModelType, ModelConnectStatus } from '../types/config'
 import { API_ENDPOINTS } from './api'
 
 // API响应类型
@@ -117,7 +117,7 @@ export const modelService = {
     name: string
     type: ModelType
     url: string
-    apiKey?: string
+    apiKey: string
     maxTokens: number
     displayName?: string
   }): Promise<void> => {
@@ -187,60 +187,4 @@ export const modelService = {
       return false
     }
   },
-
-  // Sync model list
-  syncModels: async (): Promise<void> => {
-    try {
-      // Try to sync official models, but do not interrupt the process if it fails
-      try {
-        const officialResponse = await fetch(API_ENDPOINTS.model.officialModelList, {
-          method: 'GET',
-          headers: getHeaders()
-        });
-        
-        const officialResult: ApiResponse = await officialResponse.json();
-        
-        if (officialResult.code !== 200) {
-          console.error('同步ModelEngine模型失败:', officialResult.message || '未知错误');
-        }
-      } catch (officialError) {
-        console.error('同步ModelEngine模型时发生错误:', officialError);
-      }
-      
-      // Sync custom models, must succeed, otherwise throw an error
-      const customResponse = await fetch(API_ENDPOINTS.model.customModelList, {
-        method: 'GET',
-        headers: getHeaders()
-      });
-      
-      const customResult: ApiResponse = await customResponse.json();
-      
-      if (customResult.code !== 200) {
-        throw new ModelError(customResult.message || '同步自定义模型失败', customResult.code);
-      }
-      
-    } catch (error) {
-      if (error instanceof ModelError) throw error;
-      throw new ModelError('同步模型失败', 500);
-    }
-  },
-
-  // Convert ModelOption to SingleModelConfig
-  convertToSingleModelConfig: (modelOption: ModelOption): SingleModelConfig => {
-    const config: SingleModelConfig = {
-      modelName: modelOption.name,
-      displayName: modelOption.displayName || modelOption.name,
-      apiConfig: modelOption.apiKey ? {
-        apiKey: modelOption.apiKey,
-        modelUrl: modelOption.apiUrl || '',
-      } : undefined
-    };
-    
-    // For embedding models, copy maxTokens to dimension
-    if (modelOption.type === 'embedding' || modelOption.type === 'multi_embedding') {
-      config.dimension = modelOption.maxTokens;
-    }
-    
-    return config;
-  }
 } 

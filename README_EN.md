@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/English-README-blue)](README.md)
 [![中文](https://img.shields.io/badge/中文-README-green)](README_CN.md)
 
-Nexent is an open-source agent SDK and platform that turns a single prompt into a complete multimodal service — no diagrams, no wiring. Built on MCP tool ecosystem, Nexent provides flexible model integration, scalable data processing, and robust knowledge-base management. Our goal is simple: to bring data, models, and tools together in one smart hub, so anyone can easily integrate Nexent into projects and make daily workflows smarter and more connected.
+Nexent is an open-source agent platform that turns process-level natural language into complete multimodal agents — no diagrams, no wiring. Built on the MCP tool ecosystem, Nexent provides model integration, data processing, knowledge-base management, and zero-code agent development. Our goal is simple: to bring data, models, and tools together in one smart hub, making daily workflows smarter and more connected.
 
 > One prompt. Endless reach.
 
@@ -129,16 +129,13 @@ Prefer to run Nexent from source code? Follow our [Developer Guide](DEVELOPPER_N
 # 🐛 Known Issues
 
 1. 🔄 **Knowledge Base Refresh Delays**  
-   We are aware that the knowledge base refresh mechanism currently has some delays, occasional errors, or instances where refreshes don't take effect. We plan to refactor this part soon, but please note that this is only a task management logic issue - the actual data processing speed is not affected.
+   We are aware that the knowledge base refresh mechanism currently has some delays. We plan to refactor this part soon, but please note that this is only a task management logic issue - the actual data processing speed is not affected.
 
 2. 🤖 **Limited Model Provider Support**  
    We currently have limited support for different model providers, including voice and multimodal models. We will be rapidly updating this support in the coming weeks - stay tuned for updates!
 
-3. 🎨 **Missing Agent Creation & Configuration Interface**  
-   We acknowledge that we currently don't provide a visualization interface for agent creation, tool selection, and configuration. We plan to implement this feature in the coming weeks to make the agent creation process more intuitive and user-friendly.
-
-4. 📦 **Large Docker Image Size**  
-   We are aware that our current Docker image is quite large as it includes many development middleware components. We are actively working on optimizing and reducing the image size to make deployment faster and lighter.
+3. 📦 **Large Docker Image Size**  
+   We are aware that our current Docker image is quite large (around 10GB) as it includes a powerful, extensible data processing engine, algorithms, and models. We will soon release a Lite version to reduce the image size and make deployment faster and lighter.
 
 # 👥 Contributing
 
@@ -154,5 +151,5 @@ Join our [Discord community](https://discord.gg/tb5H3S3wyv) to chat with other d
 
 # 📄 License
 
-Nexent is licensed under the [Apache License 2.0](LICENSE) with additional conditions. Please read the [LICENSE](LICENSE) file for details.
+Nexent is licensed under the [MIT](LICENSE) with additional conditions. Please read the [LICENSE](LICENSE) file for details.
 
