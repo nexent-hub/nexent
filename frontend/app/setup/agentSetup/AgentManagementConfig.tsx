@@ -25,8 +25,8 @@ const handleToolSelectCommon = async (
   mainAgentId: string | null | undefined,
   onSuccess?: (tool: Tool, isSelected: boolean) => void
 ) => {
-  // 首先检查工具是否可用
-  if (tool.is_available === false) {
+  // Only block the action when attempting to select an unavailable tool.
+  if (tool.is_available === false && isSelected) {
     message.error('该工具当前不可用，无法选择');
     return { shouldProceed: false, params: {} };
   }
@@ -364,39 +364,64 @@ function ToolPool({
       <div 
         className={`border rounded-md p-2 flex items-center transition-colors duration-200 min-h-[45px] ${
           !isAvailable
-            ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
+            ? isSelected
+              ? 'bg-blue-100 border-blue-400 opacity-60'
+              : 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
             : isSelected 
               ? 'bg-blue-100 border-blue-400' 
               : 'hover:border-blue-300'
-        } ${localIsGenerating && isAvailable ? 'opacity-50 cursor-not-allowed' : isAvailable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-        title={!isAvailable ? '工具不可用' : undefined}
+        } ${localIsGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        title={!isAvailable 
+          ? isSelected 
+            ? '该工具已禁用，请点击取消启用'
+            : '工具不可用' 
+          : tool.name}
         onClick={(e) => {
-          if (localIsGenerating || !isAvailable) return;
+          if (localIsGenerating) return;
+          if (!isAvailable && !isSelected) {
+            message.warning('该工具不可用');
+            return;
+          }
           handleToolSelect(tool, !isSelected, e);
         }}
       >
         {/* Tool name left */}
         <div className="flex-1 overflow-hidden">
-          <div className={`font-medium text-sm truncate ${!isAvailable ? 'text-gray-400' : ''}`} title={!isAvailable ? '工具不可用' : tool.name}>
+          <div className={`font-medium text-sm truncate ${!isAvailable && !isSelected ? 'text-gray-400' : ''}`} 
+               title={!isAvailable 
+                 ? isSelected 
+                   ? '该工具已禁用，请点击取消启用'
+                   : '工具不可用' 
+                 : tool.name}>
             {tool.name}
           </div>
         </div>
         {/* Tag and settings button right */}
         <div className="flex items-center gap-2 ml-2">
           <div className="flex items-center justify-start min-w-[90px] w-[90px]">
-            <Tag color={tool?.source === 'mcp' ? 'blue' : 'green'} className={`w-full text-center ${!isAvailable ? 'opacity-50' : ''}`}>
+            <Tag color={tool?.source === 'mcp' ? 'blue' : 'green'} 
+                 className={`w-full text-center ${!isAvailable && !isSelected ? 'opacity-50' : ''}`}>
               {tool?.source === 'mcp' ? 'MCP工具' : '本地工具'}
             </Tag>
           </div>
           <button 
             type="button"
             onClick={(e) => {
-              if (localIsGenerating || !isAvailable) return;
+              e.stopPropagation();  // 防止触发父元素的点击事件
+              if (localIsGenerating) return;
+              if (!isAvailable) {
+                if (isSelected) {
+                  handleToolSelect(tool, false, e);
+                } else {
+                  message.warning('该工具不可用');
+                }
+                return;
+              }
               handleConfigClick(tool, e);
             }}
-            disabled={localIsGenerating || !isAvailable}
+            disabled={localIsGenerating}
             className={`flex-shrink-0 flex items-center justify-center bg-transparent ${
-              localIsGenerating || !isAvailable ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-500'
+              localIsGenerating ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-500'
             }`}
             style={{ border: "none", padding: "4px" }}
           >
