@@ -196,7 +196,12 @@ export const ModelDeleteDialog = ({
                 <button
                   key={type}
                   onClick={() => setDeletingModelType(type)}
-                  className={`p-3 flex justify-between rounded-md border ${colorScheme.border} ${colorScheme.bg} hover:bg-opacity-80 transition-colors`}
+                  disabled={type === "stt" || type === "tts"}
+                  className={`p-3 flex justify-between rounded-md border transition-colors ${
+                    type === "stt" || type === "tts"
+                      ? `${colorScheme.border} bg-gray-100 cursor-not-allowed opacity-60`
+                      : `${colorScheme.border} ${colorScheme.bg} hover:bg-opacity-80`
+                  }`}
                 >
                   <div className="flex items-center">
                     <div className={`w-8 h-8 rounded-md flex items-center justify-center mr-3 ${colorScheme.text}`}>
@@ -204,7 +209,10 @@ export const ModelDeleteDialog = ({
                     </div>
                     <div className="flex flex-col text-left">
                       <div className="font-medium">{getModelTypeName(type)}</div>
-                      <div className="text-xs text-gray-500">{customModelsByType.length} 个自定义模型</div>
+                      <div className="text-xs text-gray-500">
+                        {customModelsByType.length} 个自定义模型
+                        {(type === "stt" || type === "tts") && " (暂不支持删除)"}
+                      </div>
                     </div>
                   </div>
                   <RightOutlined className="h-5 w-5" />
@@ -252,9 +260,13 @@ export const ModelDeleteDialog = ({
                   </div>
                   <button
                     onClick={() => handleDeleteModel(model.displayName || model.name)}
-                    disabled={deletingModels.has(model.displayName || model.name)}
-                    className="text-red-500 hover:text-red-700 p-1"
-                    title="删除模型"
+                    disabled={deletingModels.has(model.displayName || model.name) || model.type === "stt" || model.type === "tts"}
+                    className={`p-1 ${
+                      model.type === "stt" || model.type === "tts" 
+                        ? "text-gray-400 cursor-not-allowed" 
+                        : "text-red-500 hover:text-red-700"
+                    }`}
+                    title={model.type === "stt" || model.type === "tts" ? "暂不支持删除此类型模型" : "删除模型"}
                   >
                     {deletingModels.has(model.displayName || model.name) ? (
                       <svg
